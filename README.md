@@ -1,6 +1,9 @@
 # tyrian-timetable
 
-## Setup instructions
+## See it in action
+[![Open in Github Pages](https://img.shields.io/badge/Open%20in-Github%20Pages-purple?logo=github)](https://nicola-ferrarese.github.io/Tyrian-Timetable/)
+
+### Setup instructions
 
 To run the program in a browser you will need to have yarn (or npm) installed.
 
