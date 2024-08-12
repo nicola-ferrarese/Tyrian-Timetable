@@ -19,6 +19,8 @@ lazy val tyriantimetable =
         "io.indigoengine" %%% "tyrian-io" % "0.11.0",
         "org.scalameta"   %%% "munit"     % "0.7.29" % Test,
         "org.scalatest" %%% "scalatest" % "3.2.15" % Test,
+        "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M17",
+        "com.softwaremill.sttp.client4" %%% "circe" % "4.0.0-M17",
         "io.circe" %%% "circe-core" % "0.14.5",
         "io.circe" %%% "circe-generic" % "0.14.5",
         "io.circe" %%% "circe-parser" % "0.14.5"

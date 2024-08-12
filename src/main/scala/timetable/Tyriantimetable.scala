@@ -3,45 +3,62 @@ package timetable
 import cats.effect.IO
 import tyrian.Html.*
 import tyrian.*
-
+import api.ApiService
+import api.models.Departure
 import scala.scalajs.js.annotation.*
 
-@JSExportTopLevel("TyrianApp")
-case class Model(routes: List[String], waitingTimes: Map[String, Int])
-
 enum Msg:
-  case FetchRoutes
-  case RoutesReceived(routes: List[String])
-  case FetchWaitingTimes
-  case WaitingTimesReceived(times: Map[String, Int])
+  case DataReceived(data: List[Departure])
+  case DataFetchFailed(error: String)
   case NoOp
 
-object TransitApp extends TyrianIOApp[Msg, Model]:
-  def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    (Model(List.empty, Map.empty), Cmd.None)
+case class Model(
+                  data: Option[List[Departure]] = None,
+                  error: Option[String] = None
+                )
+object Model:
+  val initial: Model = Model()
 
-  def update(model: Model): Msg => (Model, Cmd[IO, Msg]) =
-    //case Msg.FetchRoutes =>
-    //  (model, Cmd.None)
-    //case Msg.RoutesReceived(routes) =>
-    //  (model.copy(routes = routes), Cmd.None)
-    case Msg.FetchWaitingTimes =>
-      (model, Cmd.None)
-    case _ => (model, Cmd.None)
-    //case Msg.WaitingTimesReceived(times) =>
-    //  (model.copy(waitingTimes = times), Cmd.None)
+@JSExportTopLevel("TyrianApp")
+object Tyriantimetable extends TyrianIOApp[Msg, Model]:
+  def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
+    (Model.initial, getPublicTransportData("1183"))
+
+  def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
+    case Msg.DataReceived(data) => (model.copy(data = Some(data)), Cmd.None)
+    case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.NoOp => (model, Cmd.None)
+    
+  }
 
   def view(model: Model): Html[Msg] =
     div(
-      h1("Transit Information"),
-      button(onClick(Msg.FetchRoutes))("Refresh Routes"),
-      button(onClick(Msg.FetchWaitingTimes))("Refresh Waiting Times"),
+      h1("Public Transport Information"),
+      model.error.map(error => p(s"Error: $error")).getOrElse(
+        model.data.map(renderData).getOrElse(p("Loading..."))
+      )
     )
 
   def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.None
-  def router: Location => Msg = Routing.none(Msg.NoOp)
 
+  override def router: Location => Msg = Routing.none(Msg.NoOp)
+
+  private def renderData(data: List[Departure]): Html[Msg] =
+    ul(data.map { departure =>
+      li(
+        s"${departure.line.designation} (${departure.line.transport_mode}) to ${departure.destination} - ${departure.display} (Expected: ${departure.expected})"
+      )
+    })
+
+
+  private def getPublicTransportData(siteId: String): Cmd[IO, Msg] =
+    Cmd.Run {
+      ApiService.fetchData(siteId).map {
+        case Right(data) => Msg.DataReceived(data)
+        case Left(error) => Msg.DataFetchFailed(error)
+      }
+    }
 
 
 

@@ -1,6 +1,7 @@
-import munit._
-import io.circe.parser._
-import ApiService._
+import api.ApiService
+import munit.*
+import io.circe.parser.*
+import api.ApiService.*
 
 class ApiServiceTest extends FunSuite {
   val sampleJson = """
