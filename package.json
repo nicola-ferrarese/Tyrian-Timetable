@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "parcel index.html --no-cache --dist-dir dist --log-level info",
-    "build": "parcel build index.html --dist-dir dist --log-level info"
+    "build": "sbt clean fastLinkJS && parcel build index.html --dist-dir dist --log-level info --public-url ./"
   },
   "devDependencies": {
     "parcel": "^2.1.0",

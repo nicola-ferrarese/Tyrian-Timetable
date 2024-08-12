@@ -19,35 +19,18 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
-      - name: Cache SBT dependencies
-        uses: actions/cache@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          path: |
-            ~/.ivy2/cache
-            ~/.sbt
-          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          node-version: '16'
 
-      - name: Build and Test
-        run: sbt clean compile test fastLinkJS
+      - name: Install dependencies
+        run: yarn install
 
-      - name: Create index.html
-        run: |
-          mkdir -p target/scala-3.4.1/classes
-          echo '<!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Tyrian App</title>
-            </head>
-            <body>
-              <div id="app"></div>
-              <script type="module" src="./main.js"></script>
-            </body>
-          </html>' > target/scala-3.4.1/classes/index.html
+      - name: Build with Parcel
+        run: yarn build
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./target/scala-3.4.1/classes
+          folder: dist
