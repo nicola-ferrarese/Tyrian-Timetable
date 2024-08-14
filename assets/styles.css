@@ -2,11 +2,11 @@
 
 @font-face {
     font-family: 'DangerOn';
-    src: url("./DangerOnTheMotorway-xV10.ttf") format('truetype');
+    src: url("/assets/DangerOnTheMotorway-xV10.ttf") format('truetype');
 }
 @font-face {
     font-family: 'Ozone';
-    src: url('./Ozone-xRRO.ttf') format('truetype');
+    src: url('/assets/Ozone-xRRO.ttf') format('truetype');
 }
 .centeritem {
     text-align: center;
