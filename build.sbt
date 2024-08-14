@@ -7,6 +7,8 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 
+Compile / resourceDirectory := baseDirectory.value / "assets"
+
 lazy val tyriantimetable =
   (project in file("."))
     .enablePlugins(ScalaJSPlugin)
