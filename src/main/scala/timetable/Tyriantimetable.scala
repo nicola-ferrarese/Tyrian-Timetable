@@ -45,11 +45,24 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   override def router: Location => Msg = Routing.none(Msg.NoOp)
 
   private def renderData(data: List[Departure]): Html[Msg] =
-    ul(data.map { departure =>
-      li(
-        s"${departure.line.designation} (${departure.line.transport_mode}) to ${departure.destination} - ${departure.display} (Expected: ${departure.expected})"
+    table(
+      thead(
+        tr(
+          th("Line"),
+          th("Destination"),
+          th("Est.Time")
+        )
+      ),
+      tbody(
+        data.map { departure =>
+          tr(
+            td(_class:="centeritem")(departure.line.designation),
+            td(departure.destination),
+            td(_class:="centeritem")(departure.display)
+          )
+        }
       )
-    })
+    )
 
 
   private def getPublicTransportData(siteId: String): Cmd[IO, Msg] =
