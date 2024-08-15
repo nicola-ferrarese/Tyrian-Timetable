@@ -1,50 +1,35 @@
-# tyrian-timetable
+# Stockholm Transit Tracker
+## Overview
+Transit Tracker is an experimental project built with Scala and Tyrian, designed to explore real-time public transportation data in Stockholm. This project serves as a learning platform to experiment with functional programming in Scala and reactive web development using the Tyrian framework.
+Technology Stack
 
-## See it in action
-[![Open in Github Pages](https://img.shields.io/badge/Open%20in-Github%20Pages-purple?logo=github)](https://nicola-ferrarese.github.io/Tyrian-Timetable/)
+**_Scala_**: The primary programming language used for both backend and frontend logic.
+**_Tyrian_**: A pure functional library for building interactive web applications in Scala.
+**_Trafiklab API_**: Provides real-time public transport data for Stockholm.
 
-### Setup instructions
+## Purpose
+The main goals of this project are:
 
-To run the program in a browser you will need to have yarn (or npm) installed.
+ - To gain hands-on experience with Scala in a web development context.
+- To explore the capabilities of the Tyrian framework for building reactive web applications.
+- To demonstrate integration with external APIs (Trafiklab) in a functional programming paradigm.
 
-Before your first run and for your tests to work, **you must** install the node dependencies with:
+## Getting Started
+To run this project locally, follow these steps:
 
-```sh
-yarn install
-```
+Ensure you have sbt (Scala Build Tool) and yarn installed on your system.
+Clone this repository to your local machine.
+Navigate to the project directory in your terminal.
+Run the following commands:
 
-This example uses Parcel.js as our bundler and dev server, there are lots of other options you might prefer like Webpack, scalajs-bunder, or even just vanilla JavaScript.
-
-We recommend you have two terminal tabs open in the directory containing this README file.
-
-In the first, we'll run sbt.
-
-```sh
-sbt
-```
-
-From now on, we can recompile the app with `fastLinkJS` or `fullLinkJS` _**but please note** that the `tyrianapp.js` file in the root is expecting the output from `fastLinkJS`_.
-
-Run `fastLinkJS` now to get an initial build in place.
-
-Then start your dev server, with:
-
-```sh
+```bash
+sbt clean fastLinkJS
+yard install
 yarn start
 ```
+Open your web browser and navigate to the address provided by the yarn start command (typically http://localhost:1234).
 
-Now navigate to [http://localhost:1234/](http://localhost:1234/) to see your site running.
+## Acknowledgements
+Special thanks to [Trafiklab](https://www.trafiklab.se/api/trafiklab-apis/sl/) for providing free access to their API metrics, which made this project possible. Their open data initiative is crucial for developers looking to create innovative solutions in the public transportation sector.
 
-If you leave parcel's dev server running, all you have to do is another `fastLinkJS` or `fullLinkJS` and your app running in the browser should hot-reload the new code.
-
-## Supported Effect Types
-
-From version `0.6.0`, Tyrian supports both Cats Effect 3 and ZIO 2.0. This template defaults to CE3 and IO (as this is the author's habit), but there is an example of a [ZIO tyrian project](https://github.com/PurpleKingdomGames/tyrian/blob/main/examples) available, and conversion is fairly straightforward.
-
-The [build](https://github.com/PurpleKingdomGames/tyrian/blob/main/examples/build.sbt#L153) for the ZIO example has libraries that you need to add/replace. You need to set up the right [imports](https://github.com/PurpleKingdomGames/tyrian/blob/main/examples/zio/src/main/scala/example/Main.scala#L6) and replace `IO` with [`Task`](https://github.com/PurpleKingdomGames/tyrian/blob/main/examples/zio/src/main/scala/example/Main.scala#L13).
-
-Otherwise, it's identical.
-
-## Supported Build Tools
-
-Tyrian works equally well with sbt or Mill. Most of the examples are given in sbt, and this g8 template uses sbt too. However there is a [Mill example](https://github.com/PurpleKingdomGames/tyrian/tree/main/examples/mill) project that serves as a good starting point.
+**_Note_**: _This project is not affiliated with or endorsed by SL (Storstockholms Lokaltrafik) or Trafiklab. It is an independent, experimental project created for learning purposes._
