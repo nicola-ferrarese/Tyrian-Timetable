@@ -13,3 +13,8 @@ case class Line(
                  designation: String,
                  transport_mode: String
                )
+
+case class Stop(
+                 id: Int,
+                 name: String,
+               )

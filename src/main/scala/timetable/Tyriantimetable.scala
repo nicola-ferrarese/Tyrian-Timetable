@@ -4,36 +4,82 @@ import cats.effect.IO
 import tyrian.Html.*
 import tyrian.*
 import api.ApiService
-import api.models.Departure
+import api.models.{Departure, Stop}
 import scala.scalajs.js.annotation.*
+
 
 enum Msg:
   case DataReceived(data: List[Departure])
   case DataFetchFailed(error: String)
+  case StopsReceived(stops: List[Stop])
+  case StopsFetchFailed(error: String)
+  case SetCurrentStop(stop: Stop)
+  case UpdateSearchTerm(term: String)
+  case ToggleSearchVisibility(visible: Boolean)
   case NoOp
 
 case class Model(
                   data: Option[List[Departure]] = None,
-                  error: Option[String] = None
+                  error: Option[String] = None,
+                  stops: List[Stop] = List.empty,
+                  currentStop: Stop = Stop(1183, "Professorslingan"), // Default stop
+                  searchTerm: String = "",
+                  isSearchVisible: Boolean = false
                 )
+
 object Model:
   val initial: Model = Model()
 
 @JSExportTopLevel("TyrianApp")
 object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    (Model.initial, getPublicTransportData("1183"))
+    (Model.initial, Cmd.Batch(getPublicTransportData("1183"), getStops))
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) => (model.copy(data = Some(data)), Cmd.None)
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
+    case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.SetCurrentStop(stop) =>
+      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), getPublicTransportData(stop.id.toString))
+    case Msg.UpdateSearchTerm(term) =>
+        if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
+        else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
+    case Msg.ToggleSearchVisibility(visible) =>
+        if model.searchTerm.equals("") then (model, Cmd.None)
+        else (model.copy(isSearchVisible = visible), Cmd.None)
     case Msg.NoOp => (model, Cmd.None)
-    
   }
 
   def view(model: Model): Html[Msg] =
     div(
-      h1("Public Transport Information"),
+      h2("stockholm Transit Tracker"),
+      div(_class := "header-container")(
+        span(_class := "current-stop")(s"From: ${model.currentStop.name}"),
+        div(_class := "search-container")(
+          input(
+            cls := "search-input",
+            id := "search-input",
+            placeholder := "Search stop",
+            onInput(s => Msg.UpdateSearchTerm(s)),
+            onFocus(Msg.ToggleSearchVisibility(true)),
+            value := model.searchTerm
+          ),
+          div(
+            _class := s"search-results ${if model.isSearchVisible && model.searchTerm.nonEmpty then "visible" else ""}",
+            id := "search-results"
+          )(
+            model.stops
+              .filter(_.name.toLowerCase.contains(model.searchTerm.toLowerCase))
+              .take(5)
+              .map(stop =>
+                div(_class := "search-result-item")(
+                  span(onClick(Msg.SetCurrentStop(stop)))(text(stop.name))
+                )
+              )
+          )
+        )
+      ),
       model.error.map(error => p(s"Error: $error")).getOrElse(
         model.data.map(renderData).getOrElse(p("Loading..."))
       )
@@ -56,14 +102,13 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       tbody(
         data.map { departure =>
           tr(
-            td(_class:="centeritem")(departure.line.designation),
+            td(_class := "centeritem")(departure.line.designation),
             td(departure.destination),
-            td(_class:="centeritem")(departure.display)
+            td(_class := "centeritem")(departure.display)
           )
         }
       )
     )
-
 
   private def getPublicTransportData(siteId: String): Cmd[IO, Msg] =
     Cmd.Run {
@@ -73,6 +118,10 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       }
     }
 
-
-
-
+  private def getStops: Cmd[IO, Msg] =
+    Cmd.Run {
+      ApiService.fetchStops().map {
+        case Right(stops) => Msg.StopsReceived(stops)
+        case Left(error) => Msg.StopsFetchFailed(error)
+      }
+    }
