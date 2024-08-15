@@ -53,3 +53,116 @@ tbody tr {
     overflow: hidden;
 }
 
+
+
+/* Header styles */
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 0.5vh;
+    border-radius: 10px;
+    background-color: #191717;
+    padding: 0.5vh;
+}
+
+.current-stop {
+    font-weight: bold;
+    color: #ffd399;
+    margin-right: 30px;
+}
+
+/* Search styles */
+.search-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    min-width: 300px;
+
+}
+h2 {
+    color: #ff9300;
+    font-size: 40px;
+    text-align: center;
+
+}
+::placeholder {
+    color: #ffd399;
+}
+.search-input {
+    font-family: 'DangerOn';
+    color: #ffd399;
+    font-size: 37px;
+    padding: 8px;
+    border: 3px solid antiquewhite;
+    border-radius: 4px;
+    width: -webkit-fill-available;
+    background-color: #191717;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #2f2c2c;
+    border: 2px solid #191717;
+    border-radius: 8px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.search-results.visible {
+    display: block;
+}
+
+.search-result-item {
+    margin: 7px;
+    cursor: pointer;
+    padding: 5px;
+    background-color: #191717;
+    border-radius: 4px;
+}
+
+.search-result-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* GitHub Footer Styles */
+.github-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 45px; /* Set a fixed height for the footer */
+    background-color: #ffae4b;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.github-button {
+    display: inline-flex;
+    align-items: center;
+    background-color: #24292e;
+    color: #ffffff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 25px;
+    transition: background-color 0.3s ease;
+}
+
+.github-button:hover {
+    background-color: #2f363d;
+}
+
+.github-button svg {
+    margin-right: 5px;
+}
+
+.github-button span {
+    margin-left: 5px;
+}
