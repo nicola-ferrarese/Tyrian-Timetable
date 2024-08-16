@@ -91,7 +91,7 @@ h2 {
     color: #ffd399;
 }
 .search-input {
-    font-family: 'DangerOn';
+    font-family: 'DangerOn', "Ozone", "sans-serif";;
     color: #ffd399;
     font-size: 37px;
     padding: 8px;
