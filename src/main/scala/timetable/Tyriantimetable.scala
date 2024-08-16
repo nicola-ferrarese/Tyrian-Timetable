@@ -14,7 +14,7 @@ enum Msg:
   case StopsReceived(stops: List[Stop])
   case StopsFetchFailed(error: String)
   case SetCurrentStop(stop: Stop)
-  case UpdateUrl(stopId: String)
+  case UpdateUrl(stopId: String, subdomain: String)
   case UpdateSearchTerm(term: String)
   case ToggleSearchVisibility(visible: Boolean)
   case NoOp
@@ -26,11 +26,11 @@ case class Model(
                   currentStop: Stop = Stop(1183, "Professorslingan"), // Default stop
                   searchTerm: String = "",
                   isSearchVisible: Boolean = false,
-                  subdomain: String = "Tyrian-Timetable" // for compatability with Github pages
+                  subdomain: String = "Tyrian-Timetable"
                 )
 
 object Model:
-  val initial: Model = Model()
+  val initial: Model = Model(currentStop = Stop(1183, "Professorslingan"))
 
 @JSExportTopLevel("TyrianApp")
 object Tyriantimetable extends TyrianIOApp[Msg, Model]:
@@ -41,20 +41,24 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) =>
       (model.copy(data = Some(data)), Nav.pushUrl[IO](s"/${model.currentStop.id}"))
-
+      
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
     case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
-    case Msg.SetCurrentStop(stop) =>
-      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false),
+    case Msg.SetCurrentStop(stop) => 
+      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), 
         Cmd.Batch(
           getPublicTransportData(stop.id.toString),
-          Nav.pushUrl[IO](s"/${model.subdomain}/${stop.id}")
+          //Nav.pushUrl[IO](s"/${stop.id}")
         )
       )
-    case Msg.UpdateUrl(stopId) =>
+    case Msg.UpdateUrl(stopId, subdomain) =>
       val newStop = model.stops.find(_.id.toString == stopId).getOrElse(model.currentStop)
-      (model.copy(currentStop = newStop), getPublicTransportData(stopId))
+      println(s"New stop: $newStop")
+      val newUrl = if subdomain.isEmpty then s"/$stopId" else s"/$subdomain/$stopId"
+      (model.copy(currentStop = newStop), Cmd.Batch(
+        Nav.pushUrl[IO](newUrl))
+      )
 
     case Msg.UpdateSearchTerm(term) =>
         if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
@@ -105,8 +109,8 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   override def router: Location => Msg =
     case loc: Location.Internal =>
       loc.pathName match
-        // case s"/${stop.id}" =>  Msg.SetCurrentStop(Stop(stopId.toInt, "")) // for development
-        case s"/${model.subdomain}/${stop.id}" =>  Msg.SetCurrentStop(Stop(stopId.toInt, "")) // for deployment
+        case s"/$subdomain/$stopId" =>  Msg.UpdateUrl(stopId, subdomain)
+        case s"/$stopId" => Msg.UpdateUrl(stopId, "")
         case _ => Msg.NoOp
     case _ => Msg.NoOp
 
