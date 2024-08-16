@@ -1,4 +1,5 @@
 # Stockholm Transit Tracker
+[![Open in Github Pages](https://img.shields.io/badge/Open%20in-Github%20Pages-purple?logo=github)](https://nicola-ferrarese.github.io/Tyrian-Timetable/)
 ## Overview
 Transit Tracker is an experimental project built with Scala and Tyrian, designed to explore real-time public transportation data in Stockholm. This project serves as a learning platform to experiment with functional programming in Scala and reactive web development using the Tyrian framework.
 Technology Stack
