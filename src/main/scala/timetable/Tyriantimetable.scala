@@ -25,7 +25,8 @@ case class Model(
                   stops: List[Stop] = List.empty,
                   currentStop: Stop = Stop(1183, "Professorslingan"), // Default stop
                   searchTerm: String = "",
-                  isSearchVisible: Boolean = false
+                  isSearchVisible: Boolean = false,
+                  subdomain: String = "Tyrian-Timetable" // for compatability with Github pages
                 )
 
 object Model:
@@ -40,15 +41,15 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) =>
       (model.copy(data = Some(data)), Nav.pushUrl[IO](s"/${model.currentStop.id}"))
-      
+
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
     case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
-    case Msg.SetCurrentStop(stop) => 
-      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), 
+    case Msg.SetCurrentStop(stop) =>
+      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false),
         Cmd.Batch(
           getPublicTransportData(stop.id.toString),
-          Nav.pushUrl[IO](s"/${stop.id}")
+          Nav.pushUrl[IO](s"/${model.subdomain}/${stop.id}")
         )
       )
     case Msg.UpdateUrl(stopId) =>
@@ -104,7 +105,8 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   override def router: Location => Msg =
     case loc: Location.Internal =>
       loc.pathName match
-        case s"/$stopId" =>  Msg.SetCurrentStop(Stop(stopId.toInt, ""))
+        // case s"/${stop.id}" =>  Msg.SetCurrentStop(Stop(stopId.toInt, "")) // for development
+        case s"/${model.subdomain}/${stop.id}" =>  Msg.SetCurrentStop(Stop(stopId.toInt, "")) // for deployment
         case _ => Msg.NoOp
     case _ => Msg.NoOp
 
