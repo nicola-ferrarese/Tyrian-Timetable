@@ -14,6 +14,7 @@ enum Msg:
   case StopsReceived(stops: List[Stop])
   case StopsFetchFailed(error: String)
   case SetCurrentStop(stop: Stop)
+  case UpdateUrl(stopId: String)
   case UpdateSearchTerm(term: String)
   case ToggleSearchVisibility(visible: Boolean)
   case NoOp
@@ -33,15 +34,27 @@ object Model:
 @JSExportTopLevel("TyrianApp")
 object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    (Model.initial, Cmd.Batch(getPublicTransportData("1183"), getStops))
+    val stopId = flags.getOrElse("stopId", "1183") // Default stop
+    (Model.initial, Cmd.Batch(getPublicTransportData(stopId), getStops))
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
-    case Msg.DataReceived(data) => (model.copy(data = Some(data)), Cmd.None)
+    case Msg.DataReceived(data) =>
+      (model.copy(data = Some(data)), Nav.pushUrl[IO](s"/${model.currentStop.id}"))
+      
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
     case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
-    case Msg.SetCurrentStop(stop) =>
-      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), getPublicTransportData(stop.id.toString))
+    case Msg.SetCurrentStop(stop) => 
+      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), 
+        Cmd.Batch(
+          getPublicTransportData(stop.id.toString),
+          Nav.pushUrl[IO](s"/${stop.id}")
+        )
+      )
+    case Msg.UpdateUrl(stopId) =>
+      val newStop = model.stops.find(_.id.toString == stopId).getOrElse(model.currentStop)
+      (model.copy(currentStop = newStop), getPublicTransportData(stopId))
+
     case Msg.UpdateSearchTerm(term) =>
         if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
         else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
@@ -88,7 +101,12 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.None
 
-  override def router: Location => Msg = Routing.none(Msg.NoOp)
+  override def router: Location => Msg =
+    case loc: Location.Internal =>
+      loc.pathName match
+        case s"/$stopId" =>  Msg.SetCurrentStop(Stop(stopId.toInt, ""))
+        case _ => Msg.NoOp
+    case _ => Msg.NoOp
 
   private def renderData(data: List[Departure]): Html[Msg] =
     table(
