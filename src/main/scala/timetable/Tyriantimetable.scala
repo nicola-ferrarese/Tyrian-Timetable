@@ -5,7 +5,6 @@ import tyrian.Html.*
 import tyrian.*
 import api.ApiService
 import api.models.{Departure, Stop}
-import org.scalajs.dom
 import tyrian.cmds.LocalStorage
 import scala.concurrent.duration._
 import scala.scalajs.js.annotation.*
@@ -29,49 +28,40 @@ object Model:
 object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val initialModel = Model.initial
+    
     val getInitialStopId = Cmd.Batch(
-      getStopIdFromUrl,
+      Utils.getStopIdFromUrl,
       LocalStorage.getItem[IO, Msg]("stopId") {
         case Right(LocalStorage.Result.Found(stopId)) => Msg.InitialStopId(stopId)
         case Left(_) => Msg.InitialStopId("1183")
       }
     )
-    (initialModel, Cmd.Batch(getInitialStopId, getStops))
-
-  private def getStopIdFromUrl: Cmd[IO, Msg] =
-    Cmd.Run {
-      IO {
-        val stopId = dom.window.location.search
-          .stripPrefix("?")
-          .split("&")
-          .map(_.split("="))
-          .collect { case Array(key, value) => key -> value }
-          .toMap
-          .get("stopId")
-          .getOrElse("1183")
-        Msg.InitialStopId(stopId)
-      }
-    }
+    
+    (initialModel, Cmd.Batch(getInitialStopId, Utils.getStops))
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) =>
       val newUrl = if model.subdomain.isEmpty then s"/?stopId=${model.currentStop.id}" else s"/${model.subdomain}?stopId=${model.currentStop.id}"
       (model.copy(data = Some(data)), Nav.pushUrl[IO](newUrl))
-
-    case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.DataFetchFailed(error) => 
+      (model.copy(error = Some(error)), Cmd.None)
     case Msg.StopsReceived(stops) =>
       val updatedCurrentStop = stops.find(_.id == model.currentStop.id).getOrElse(model.currentStop)
       (model.copy(stops = stops, currentStop = updatedCurrentStop), Cmd.None)
-    case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.StopsFetchFailed(error) => 
+      (model.copy(error = Some(error)), Cmd.Run(ApiService.fetchStops().map {
+        case Right(stops) => Msg.StopsReceived(stops)
+        case Left(error) => Msg.StopsFetchFailed(error)
+      }))
     case Msg.FetchDataTick =>
-      (model, getPublicTransportData(model.currentStop.id.toString))
+      (model, Utils.getPublicTransportData(model.currentStop.id.toString))
     case Msg.Logger(msg) =>
       println(msg)
       (model, Cmd.None)
     case Msg.SetCurrentStop(stop) =>
       (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false),
         Cmd.Batch(
-          getPublicTransportData(stop.id.toString),
+          Utils.getPublicTransportData(stop.id.toString),
         )
       )
     case Msg.UpdateUrl(stopId) =>
@@ -79,7 +69,7 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       val newUrl = if model.subdomain.isEmpty then s"/?stopId=$stopId" else s"/${model.subdomain}?stopId=$stopId"
       (model.copy(currentStop = newStop), Cmd.Batch(
         Nav.pushUrl[IO](newUrl),
-        getPublicTransportData(newStop.id.toString),
+        Utils.getPublicTransportData(newStop.id.toString),
         LocalStorage.setItem("stopId", stopId) {
             case LocalStorage.Result.Success => Msg.Logger(s"Saved stopId: $stopId")
             case e => Msg.Logger(s"Error saving stopId: $e")
@@ -88,7 +78,7 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       )
 
     case Msg.InitialStopId(stopId) =>
-      (model.copy(currentStop = Stop(stopId.toInt, "Loading...")), getPublicTransportData(stopId))
+      (model.copy(currentStop = Stop(stopId.toInt, "Loading...")), Utils.getPublicTransportData(stopId))
     case Msg.UpdateSearchTerm(term) =>
       if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
       else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
@@ -135,17 +125,13 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   val tick = Sub.every[IO](30.second, "FetchDataTick").map(_ => Msg.FetchDataTick)
   def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.Batch[IO, Msg](tick)
-
-
-
-
+  
   override def router: Location => Msg =
     case loc: Location.Internal =>
       val params = Utils.parseQueryParams(loc.search)
       println(s"Parsed params: $params")
       params.get("stopId") match
         case Some(stopId) =>
-          println(s"Found stopId: $stopId")
           Msg.UpdateUrl(stopId)
           Msg.SetCurrentStop(Stop(stopId.toInt, "Loading..."))
         case None =>
@@ -174,19 +160,3 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
         }
       )
     )
-
-  private def getPublicTransportData(siteId: String): Cmd[IO, Msg] =
-    Cmd.Run {
-      ApiService.fetchData(siteId).map {
-        case Right(data) => Msg.DataReceived(data)
-        case Left(error) => Msg.DataFetchFailed(error)
-      }
-    }
-
-  private def getStops: Cmd[IO, Msg] =
-    Cmd.Run {
-      ApiService.fetchStops().map {
-        case Right(stops) => Msg.StopsReceived(stops)
-        case Left(error) => Msg.StopsFetchFailed(error)
-      }
-    }
