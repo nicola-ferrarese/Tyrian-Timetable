@@ -7,7 +7,6 @@ import api.ApiService
 import api.models.{Departure, Stop}
 import scala.scalajs.js.annotation.*
 
-
 enum Msg:
   case DataReceived(data: List[Departure])
   case DataFetchFailed(error: String)
@@ -40,37 +39,37 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) =>
-      val newUrl = if model.subdomain.isEmpty then s"/${model.currentStop.id}" else s"/${model.subdomain}/${model.currentStop.id}"
+      val newUrl = if model.subdomain.isEmpty then s"/?stopId=${model.currentStop.id}" else s"/${model.subdomain}?stopId=${model.currentStop.id}"
       (model.copy(data = Some(data)), Nav.pushUrl[IO](newUrl))
-      
+
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
     case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
-    case Msg.SetCurrentStop(stop) => 
-      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false), 
+    case Msg.SetCurrentStop(stop) =>
+      (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false),
         Cmd.Batch(
           getPublicTransportData(stop.id.toString),
         )
       )
     case Msg.UpdateUrl(stopId) =>
       val newStop = model.stops.find(_.id.toString == stopId).getOrElse(model.currentStop)
-      val newUrl = if model.subdomain.isEmpty then s"/$stopId" else s"/${model.subdomain}/$stopId"
+      val newUrl = if model.subdomain.isEmpty then s"/?stopId=$stopId" else s"/${model.subdomain}?stopId=$stopId"
       (model.copy(currentStop = newStop), Cmd.Batch(
         Nav.pushUrl[IO](newUrl))
       )
 
     case Msg.UpdateSearchTerm(term) =>
-        if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
-        else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
+      if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
+      else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
     case Msg.ToggleSearchVisibility(visible) =>
-        if model.searchTerm.equals("") then (model, Cmd.None)
-        else (model.copy(isSearchVisible = visible), Cmd.None)
+      if model.searchTerm.equals("") then (model, Cmd.None)
+      else (model.copy(isSearchVisible = visible), Cmd.None)
     case Msg.NoOp => (model, Cmd.None)
   }
 
   def view(model: Model): Html[Msg] =
     div(
-      h2("stockholm Transit Tracker"),
+      tyrian.Html.h2("Stockholm Transit Tracker"),
       div(_class := "header-container")(
         span(_class := "current-stop")(s"From: ${model.currentStop.name}"),
         div(_class := "search-container")(
@@ -105,11 +104,18 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.None
 
+  private def parseQueryParams(search: String): Map[String, String] =
+    search.stripPrefix("?")
+      .split("&")
+      .map(_.split("="))
+      .collect { case Array(key, value) => key -> value }
+      .toMap
+
   override def router: Location => Msg =
     case loc: Location.Internal =>
-      loc.pathName match
-        case s"/$stopId" => Msg.UpdateUrl(stopId)
-        case _ => Msg.NoOp
+      parseQueryParams(loc.search.toString).get("stopId") match
+        case Some(stopId) => Msg.UpdateUrl(stopId)
+        case None => Msg.NoOp
     case _ => Msg.NoOp
 
   private def renderData(data: List[Departure]): Html[Msg] =
