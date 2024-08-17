@@ -9,23 +9,8 @@ import org.scalajs.dom
 import tyrian.cmds.LocalStorage
 import scala.concurrent.duration._
 import scala.scalajs.js.annotation.*
-
-enum Msg:
-  //Timetable messages
-  case DataReceived(data: List[Departure])
-  case DataFetchFailed(error: String)
-  //Stop messages
-  case StopsReceived(stops: List[Stop])
-  case StopsFetchFailed(error: String)
-  //model messages
-  case InitialStopId(stopId: String)
-  case SetCurrentStop(stop: Stop)
-  case UpdateUrl(stopId: String)
-  case UpdateSearchTerm(term: String)
-  case ToggleSearchVisibility(visible: Boolean)
-  case FetchDataTick
-  case Logger(msg: String)
-  case NoOp
+import timetable.Msg.*
+import timetable.Utils.*
 
 case class Model(
                   data: Option[List[Departure]] = None,
@@ -152,24 +137,11 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
     Sub.Batch[IO, Msg](tick)
 
 
-  private def parseQueryParams(searchOption: Option[String]): Map[String, String] =
-    searchOption match
-      case Some(search) =>
-        println(s"Parsing search string: $search")
-        search.stripPrefix("?")
-          .split("&")
-          .flatMap { param =>
-            val parts = param.split("=")
-            if (parts.length == 2) Some(parts(0) -> parts(1)) else None
-          }
-          .toMap
-      case None =>
-        println("No search string found")
-        Map.empty
+
 
   override def router: Location => Msg =
     case loc: Location.Internal =>
-      val params = parseQueryParams(loc.search)
+      val params = Utils.parseQueryParams(loc.search)
       println(s"Parsed params: $params")
       params.get("stopId") match
         case Some(stopId) =>
