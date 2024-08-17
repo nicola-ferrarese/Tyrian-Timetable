@@ -7,7 +7,7 @@ import api.ApiService
 import api.models.{Departure, Stop}
 import org.scalajs.dom
 import tyrian.cmds.LocalStorage
-
+import scala.concurrent.duration._
 import scala.scalajs.js.annotation.*
 
 enum Msg:
@@ -23,6 +23,7 @@ enum Msg:
   case UpdateUrl(stopId: String)
   case UpdateSearchTerm(term: String)
   case ToggleSearchVisibility(visible: Boolean)
+  case FetchDataTick
   case Logger(msg: String)
   case NoOp
 
@@ -30,7 +31,7 @@ case class Model(
                   data: Option[List[Departure]] = None,
                   error: Option[String] = None,
                   stops: List[Stop] = List.empty,
-                  currentStop: Stop = Stop(1183, "Professorslingan"), // Default stop
+                  currentStop: Stop = Stop(1183, "Professorsslingan"), // Default stop
                   searchTerm: String = "",
                   isSearchVisible: Boolean = false,
                   subdomain: String = "Tyrian-Timetable" // Subdomain for the app, to allow Github Pages hosting
@@ -77,6 +78,8 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       val updatedCurrentStop = stops.find(_.id == model.currentStop.id).getOrElse(model.currentStop)
       (model.copy(stops = stops, currentStop = updatedCurrentStop), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.FetchDataTick =>
+      (model, getPublicTransportData(model.currentStop.id.toString))
     case Msg.Logger(msg) =>
       println(msg)
       (model, Cmd.None)
@@ -114,7 +117,7 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
     div(
       tyrian.Html.h2("Stockholm Transit Tracker"),
       div(_class := "header-container")(
-        span(_class := "current-stop")(s"From: ${model.currentStop.name}"),
+        tyrian.Html.span(_class := "current-stop")(s"From: ${model.currentStop.name}"),
         div(_class := "search-container")(
           input(
             cls := "search-input",
@@ -133,7 +136,7 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
               .take(5)
               .map(stop =>
                 div(_class := "search-result-item")(
-                  span(onClick(Msg.SetCurrentStop(stop)))(text(stop.name))
+                  tyrian.Html.span(onClick(Msg.SetCurrentStop(stop)))(text(stop.name))
                 )
               )
           )
@@ -144,8 +147,10 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       )
     )
 
+  val tick = Sub.every[IO](30.second, "FetchDataTick").map(_ => Msg.FetchDataTick)
   def subscriptions(model: Model): Sub[IO, Msg] =
-    Sub.None
+    Sub.Batch[IO, Msg](tick)
+
 
   private def parseQueryParams(searchOption: Option[String]): Map[String, String] =
     searchOption match
