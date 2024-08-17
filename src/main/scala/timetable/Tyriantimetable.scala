@@ -5,17 +5,25 @@ import tyrian.Html.*
 import tyrian.*
 import api.ApiService
 import api.models.{Departure, Stop}
+import org.scalajs.dom
+import tyrian.cmds.LocalStorage
+
 import scala.scalajs.js.annotation.*
 
 enum Msg:
+  //Timetable messages
   case DataReceived(data: List[Departure])
   case DataFetchFailed(error: String)
+  //Stop messages
   case StopsReceived(stops: List[Stop])
   case StopsFetchFailed(error: String)
+  //model messages
+  case InitialStopId(stopId: String)
   case SetCurrentStop(stop: Stop)
   case UpdateUrl(stopId: String)
   case UpdateSearchTerm(term: String)
   case ToggleSearchVisibility(visible: Boolean)
+  case Logger(msg: String)
   case NoOp
 
 case class Model(
@@ -29,13 +37,35 @@ case class Model(
                 )
 
 object Model:
-  val initial: Model = Model(currentStop = Stop(1183, "Professorslingan"))
+  val initial: Model = Model()
 
 @JSExportTopLevel("TyrianApp")
 object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    val stopId = flags.getOrElse("stopId", "1183") // Default stop
-    (Model.initial, Cmd.Batch(getPublicTransportData(stopId), getStops))
+    val initialModel = Model.initial
+    val getInitialStopId = Cmd.Batch(
+      getStopIdFromUrl,
+      LocalStorage.getItem[IO, Msg]("stopId") {
+        case Right(LocalStorage.Result.Found(stopId)) => Msg.InitialStopId(stopId)
+        case Left(_) => Msg.InitialStopId("1183")
+      }
+    )
+    (initialModel, Cmd.Batch(getInitialStopId, getStops))
+
+  private def getStopIdFromUrl: Cmd[IO, Msg] =
+    Cmd.Run {
+      IO {
+        val stopId = dom.window.location.search
+          .stripPrefix("?")
+          .split("&")
+          .map(_.split("="))
+          .collect { case Array(key, value) => key -> value }
+          .toMap
+          .get("stopId")
+          .getOrElse("1183")
+        Msg.InitialStopId(stopId)
+      }
+    }
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.DataReceived(data) =>
@@ -43,8 +73,13 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       (model.copy(data = Some(data)), Nav.pushUrl[IO](newUrl))
 
     case Msg.DataFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
-    case Msg.StopsReceived(stops) => (model.copy(stops = stops), Cmd.None)
+    case Msg.StopsReceived(stops) =>
+      val updatedCurrentStop = stops.find(_.id == model.currentStop.id).getOrElse(model.currentStop)
+      (model.copy(stops = stops, currentStop = updatedCurrentStop), Cmd.None)
     case Msg.StopsFetchFailed(error) => (model.copy(error = Some(error)), Cmd.None)
+    case Msg.Logger(msg) =>
+      println(msg)
+      (model, Cmd.None)
     case Msg.SetCurrentStop(stop) =>
       (model.copy(currentStop = stop, searchTerm = "", isSearchVisible = false),
         Cmd.Batch(
@@ -55,9 +90,17 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
       val newStop = model.stops.find(_.id.toString == stopId).getOrElse(model.currentStop)
       val newUrl = if model.subdomain.isEmpty then s"/?stopId=$stopId" else s"/${model.subdomain}?stopId=$stopId"
       (model.copy(currentStop = newStop), Cmd.Batch(
-        Nav.pushUrl[IO](newUrl))
+        Nav.pushUrl[IO](newUrl),
+        getPublicTransportData(newStop.id.toString),
+        LocalStorage.setItem("stopId", stopId) {
+            case LocalStorage.Result.Success => Msg.Logger(s"Saved stopId: $stopId")
+            case e => Msg.Logger(s"Error saving stopId: $e")
+          }
+        )
       )
 
+    case Msg.InitialStopId(stopId) =>
+      (model.copy(currentStop = Stop(stopId.toInt, "Loading...")), getPublicTransportData(stopId))
     case Msg.UpdateSearchTerm(term) =>
       if model.searchTerm.equals("") then (model.copy(searchTerm = term, isSearchVisible = false), Cmd.None)
       else (model.copy(searchTerm = term, isSearchVisible = true), Cmd.None)
@@ -104,19 +147,36 @@ object Tyriantimetable extends TyrianIOApp[Msg, Model]:
   def subscriptions(model: Model): Sub[IO, Msg] =
     Sub.None
 
-  private def parseQueryParams(search: String): Map[String, String] =
-    search.stripPrefix("?")
-      .split("&")
-      .map(_.split("="))
-      .collect { case Array(key, value) => key -> value }
-      .toMap
+  private def parseQueryParams(searchOption: Option[String]): Map[String, String] =
+    searchOption match
+      case Some(search) =>
+        println(s"Parsing search string: $search")
+        search.stripPrefix("?")
+          .split("&")
+          .flatMap { param =>
+            val parts = param.split("=")
+            if (parts.length == 2) Some(parts(0) -> parts(1)) else None
+          }
+          .toMap
+      case None =>
+        println("No search string found")
+        Map.empty
 
   override def router: Location => Msg =
     case loc: Location.Internal =>
-      parseQueryParams(loc.search.toString).get("stopId") match
-        case Some(stopId) => Msg.UpdateUrl(stopId)
-        case None => Msg.NoOp
-    case _ => Msg.NoOp
+      val params = parseQueryParams(loc.search)
+      println(s"Parsed params: $params")
+      params.get("stopId") match
+        case Some(stopId) =>
+          println(s"Found stopId: $stopId")
+          Msg.UpdateUrl(stopId)
+          Msg.SetCurrentStop(Stop(stopId.toInt, "Loading..."))
+        case None =>
+          Msg.Logger("No stopId found in URL")
+    case _ =>
+      println("Non-internal location, using default stopId")
+      Msg.UpdateUrl("1183")
+
 
   private def renderData(data: List[Departure]): Html[Msg] =
     table(
