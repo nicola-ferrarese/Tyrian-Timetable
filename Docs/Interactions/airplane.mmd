@@ -1,0 +1,35 @@
+sequenceDiagram
+    participant U as User
+    participant A as TransportApp
+    participant F as TransportFacade
+    participant API as AirplaneAPI
+
+    U->>A: Open App (Airport Mode)
+    A->>A: Execute LoadAirports Command
+    A->>F: loadAirports()
+    F->>API: loadStations()
+    API-->>F: Return Airports
+    F-->>A: Return Airports
+    A->>U: Render Airport Selection UI
+
+    U->>A: Select Airport
+    A->>A: Execute SelectAirport Command
+    A->>A: Execute LoadAirportDepartures Command
+    A->>A: Execute LoadAirportArrivals Command
+    A->>F: loadAirportDepartures(airportId)
+    A->>F: loadAirportArrivals(airportId)
+    F->>API: loadDepartures(airportId)
+    F->>API: loadArrivals(airportId)
+    API-->>F: Return Departures
+    API-->>F: Return Arrivals
+    F-->>A: Return Departures
+    F-->>A: Return Arrivals
+    A->>U: Render Departures and Arrivals UI
+
+    U->>A: Select Destination Airport
+    A->>A: Execute CheckRoute Command
+    A->>F: checkRoute(originId, destinationId)
+    F->>API: checkRoute(originId, destinationId)
+    API-->>F: Return Route
+    F-->>A: Return Route
+    A->>U: Render Route Information

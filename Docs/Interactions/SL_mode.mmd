@@ -1,0 +1,26 @@
+sequenceDiagram
+    participant U as User
+    participant A as DepartureBoardApp
+    participant F as DepartureBoardFacade
+    participant API as ExternalApiClient
+    participant M as Model
+
+    U->>A: Open App
+    A->>M: Initialize Model (default mode: Bus)
+    A->>A: Execute LoadStations Command (Bus)
+    A->>F: loadStations(Bus)
+    F->>API: fetchStations() (Bus API)
+    API-->>F: Return StationDTOs (Bus)
+    F-->>A: Return Stations (Bus)
+    A->>M: Update Model with Stations
+    A->>U: Render Station Selection UI
+
+    U->>A: Select Station
+    A->>A: Execute SelectStation Command
+    A->>A: Execute LoadDepartures Command
+    A->>F: loadDepartures(selectedStation)
+    F->>API: fetchDepartures(stationId)
+    API-->>F: Return DepartureDTOs
+    F-->>A: Return Departures
+    A->>M: Update Model with Departures
+    A->>U: Render Departures UI
