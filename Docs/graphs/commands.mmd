@@ -1,0 +1,45 @@
+
+classDiagram
+
+
+    class Command {
+        <<interface>>
+    }
+
+    class BusCommand {
+        <<interface>>
+    }
+    class LoadBusStations {
+    }
+    class LoadBusDepartures {
+        +String stationId
+    }
+
+    class AirplaneCommand {
+        <<interface>>
+    }
+    class LoadAirports {
+    }
+    class LoadAirportDepartures {
+        +String airportId
+    }
+    class LoadAirportArrivals {
+        +String airportId
+    }
+    class CheckRoute {
+        +Station origin
+        +Station destination
+    }
+
+
+
+
+    Command <|-- BusCommand
+    Command <|-- AirplaneCommand
+    BusCommand <|-- LoadBusStations
+    BusCommand <|-- LoadBusDepartures
+    AirplaneCommand <|-- LoadAirports
+    AirplaneCommand <|-- LoadAirportDepartures
+    AirplaneCommand <|-- LoadAirportArrivals
+    AirplaneCommand <|-- CheckRoute
+

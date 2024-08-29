@@ -1,0 +1,97 @@
+classDiagram
+    class StationDTO {
+        +String id
+        +String name
+        +String transportType
+    }
+    class DepartureDTO {
+        +String id
+        +String transportType
+        +String destination
+        +String scheduledTime
+        +String status
+    }
+    class ArrivalDTO {
+        +String id
+        +String origin
+        +String scheduledTime
+        +String status
+    }
+    class RouteDTO {
+        +String id
+        +String originId
+        +String destinationId
+        +String scheduledDeparture
+        +String scheduledArrival
+        +String status
+    }
+
+    class Station {
+        +String id
+        +String name
+        +TransportType transportType
+    }
+    class Departure {
+        +String id
+        +TransportType transportType
+        +String destination
+        +LocalDateTime scheduledTime
+        +DepartureStatus status
+    }
+    class Arrival {
+        +String id
+        +String origin
+        +LocalDateTime scheduledTime
+        +DepartureStatus status
+    }
+    class Route {
+        +String id
+        +Station origin
+        +Station destination
+        +LocalDateTime scheduledDeparture
+        +LocalDateTime scheduledArrival
+        +DepartureStatus status
+    }
+
+    class TransportAPI {
+        <<interface>>
+        +loadStations() IO~List~StationDTO~~
+        +loadDepartures(String stationId) IO~List~DepartureDTO~~
+    }
+
+    class BusAPI {
+        -String apiKey
+        +loadStations() IO~List~StationDTO~~
+        +loadDepartures(String stationId) IO~List~DepartureDTO~~
+    }
+
+    class AirplaneAPI {
+        -String apiKey
+        +loadStations() IO~List~StationDTO~~
+        +loadDepartures(String airportId) IO~List~DepartureDTO~~
+        +loadArrivals(String airportId) IO~List~ArrivalDTO~~
+        +fetchRoutes(String departureId, String destinationId) IO~List~RouteDTO~~
+        +calculateOptimalRoute(List~RouteDTO~ routes) IO~RouteDTO~
+    }
+
+    class TransportFacade {
+        -BusAPI busAPI
+        -AirplaneAPI airplaneAPI
+        +loadBusStations() IO~List~Station~~
+        +loadAirports() IO~List~Station~~
+        +loadBusDepartures(String stationId) IO~List~Departure~~
+        +loadAirportDepartures(String airportId) IO~List~Departure~~
+        +loadAirportArrivals(String airportId) IO~List~Arrival~~
+        +fetchAndCalculateOptimalRoute(String departureId, String destinationId) IO~Route~
+    }
+
+    TransportAPI <|.. BusAPI
+    TransportAPI <|.. AirplaneAPI
+
+    TransportFacade --> BusAPI
+    TransportFacade --> AirplaneAPI
+
+    StationDTO .. Station : transforms
+    DepartureDTO .. Departure : transforms
+    ArrivalDTO .. Arrival : transforms
+    RouteDTO .. Route : transforms
