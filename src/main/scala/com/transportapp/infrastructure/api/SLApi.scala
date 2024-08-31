@@ -39,22 +39,19 @@ class SLApi extends TransportApi:
     }
   }
 
-  def loadDepartures(stationId: String): IO[Either[String, List[Departure]]] =  IO.fromFuture {
+  def loadDepartures(stationId: String): IO[Option[List[Departure]]] = IO.fromFuture {
     IO {
       val request = basicRequest.get(uri"${getDeparturesUrl(stationId)}")
         .response(asJson[SLDepartureResponse])
 
       request.send(backend).map { response =>
         response.body match {
-          case Right(data) => Right(data.departures.map { departure =>
-            convertToDeparture(departure)
-          })
-          case Left(error) => Left(error.getMessage)
+          case Right(departureResponse) => Some(departureResponse.departures.map(convertToDeparture))
+          case Left(error) => None
         }
       }
     }
   }
-  
 
   private def convertToDeparture(slDeparture: SLDeparture): Departure =
     Departure(
@@ -72,7 +69,3 @@ class SLApi extends TransportApi:
     case "METRO" => TransportType.Metro
     case "TRAM" => TransportType.Tram
     case _ => throw new IllegalArgumentException(s"Unknown transport mode: $mode")
-
-
-
-
