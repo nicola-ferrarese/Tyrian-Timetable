@@ -6,13 +6,13 @@ import tyrian.*
 import tyrian.Html.*
 import cats.effect.IO
 import com.transportapp.infrastructure.facades.TransportFacade
+import com.transportapp.infrastructure.api.SLApi
 
 enum Msg:
   case Departures, Station, None
   case UpdateOutput(output: String)
 
-case class Model(count: Int, output: String):
-  val transportFacade = TransportFacade()
+case class Model(count: Int, output: String)
 
 
 object Model:
@@ -20,6 +20,8 @@ object Model:
   
 @JSExportTopLevel("TyrianApp")
 object TransportApp extends TyrianIOApp[Msg, Model]:
+  private val slApi = SLApi()
+  private val transportFacade = TransportFacade(slApi)
 
 
 
@@ -30,7 +32,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
     case Msg.Departures =>
       (model.copy(count = model.count + 1), Cmd.Run {
         println("Fetching departures")
-        model.transportFacade.getSLDepartures("1183").map {
+        transportFacade.getSLDepartures("1183").map {
           case Right(departures) => Msg.UpdateOutput(departures.toString())
           case Left(error) => Msg.UpdateOutput(s"Error: $error")
         }
@@ -38,7 +40,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
     case Msg.Station =>
       (model.copy(count = model.count - 1), Cmd.Run {
         println("Fetching stations")
-        model.transportFacade.stations.map {
+        transportFacade.loadSLStations.map {
           case Right(stations) => Msg.UpdateOutput(stations.toString())
           case Left(error) => Msg.UpdateOutput(s"Error: $error")
         }
