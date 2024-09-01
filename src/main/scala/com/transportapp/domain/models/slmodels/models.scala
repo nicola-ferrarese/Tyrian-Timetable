@@ -1,5 +1,9 @@
 package com.transportapp.domain.models.slmodels
 
+
+case class SLStation(id: Int, name: String, lat: Option[Double], lon: Option[Double]):
+  require(name.nonEmpty, "Station name cannot be empty")
+  
 case class SLDeparture(
                         destination: String,
                         state: String,

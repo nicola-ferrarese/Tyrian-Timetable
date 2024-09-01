@@ -9,9 +9,9 @@ class SLHandler(transportFacade: TransportFacade){
   def handle(command: SLCommand): IO[SLEvent] = command match {
     case SLCommand.LoadStations =>
       transportFacade.loadSLStations.map(SLEvent.StationsLoaded(_))
-    case SLCommand.GetDepartures(stationId) =>
-      transportFacade.getSLDepartures(stationId).map {
-        case Some(departures) => SLEvent.DeparturesLoaded(departures)
+    case SLCommand.GetDepartures(stationId, filter) =>
+      transportFacade.getSLDepartures(stationId, filter).map {
+        case Some(departures) =>  SLEvent.DeparturesLoaded(departures)
         case None => SLEvent.DeparturesLoaded(List.empty)
       }
   }

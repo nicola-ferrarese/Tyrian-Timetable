@@ -7,5 +7,4 @@ enum Msg:
   case ExecuteCommand(command: Command)
   case HandleEvent(event: AppEvent)
   case ToggleAppMode
-  case FilterStations(term: String)
   case NoOp
