@@ -14,7 +14,7 @@ case class Model(
       searchVisible: Boolean = false,
       slFilteredStations:  Option[List[Station]] = None,
       slTransportTypeFilter: TransportType = TransportType.All,
-      subdomain: String = "Tyrian-Timetable",
+      subdomain: String = "",
                 )
 
 object Model:
