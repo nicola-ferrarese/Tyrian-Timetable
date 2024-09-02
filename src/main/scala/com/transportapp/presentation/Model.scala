@@ -15,8 +15,9 @@ case class Model(
       output: String = "",
       searchVisible: Boolean = false,
       slFilteredStations:  Option[List[Station]] = None,
-      slTransportTypeFilter: TransportType = TransportType.All
-)
+      slTransportTypeFilter: TransportType = TransportType.All,
+      subdomain: String = "Tyrian-Timetable",
+                )
 
 object Model:
   val initial: Model = Model(
@@ -26,7 +27,9 @@ object Model:
   )
   extension (model: Model)
     def updateStation(station: Station): Model =
-      model.copy(selectedStation = station, searchVisible = false)
+      val CheckedStation = getStation(station.id)
+      model.copy(selectedStation = CheckedStation, searchVisible = false)
+
 
     def updateStations(stations: Either[String, List[Station]]): Model =
       model.copy(slStations = stations)
@@ -57,3 +60,12 @@ object Model:
 
     def updateTransportTypeFilter(filter: TransportType): Model =
         model.copy(slTransportTypeFilter = filter)
+
+    private def getStation(stationId: String): Station =
+      model.slStations match
+        case Right(stations) =>
+          stations.find(_.id == stationId) match
+            case station =>
+              station.getOrElse(Station("0", "No station found"))              
+        case Left(error) =>
+          Station(stationId, "Loading..")

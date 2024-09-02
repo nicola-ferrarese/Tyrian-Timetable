@@ -11,8 +11,11 @@ import com.transportapp.domain.models.{Departure, Station}
 import com.transportapp.application.commands.*
 import com.transportapp.application.handlers.SLHandler
 import com.transportapp.domain.events.*
+import scala.concurrent.duration.DurationInt
+
 
 import scala.scalajs.js
+import org.scalajs.dom
 import com.transportapp.domain.models.TransportType
 
 
@@ -26,9 +29,18 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val initialStation = Station("1183", "Professorsslingan")
     val model = Model.initial.updateStation(initialStation)
+    val initialStationCmd = Cmd.Run(
+      IO {
+        val urlParams = new dom.URLSearchParams(dom.window.location.search)
+        val station = Option(urlParams.get("stopId"))
+        station match
+          case Some(stopId) =>
+            Msg.HandleEvent(TyEvent.stationSelected(Station(stopId, "Loading...")))
+          case None =>
+            Msg.HandleEvent(TyEvent.stationSelected(initialStation))
+    })
     val loadStationsCmd = Cmd.Run(slCommandHandler.handle(SLCommand.LoadStations).map(Msg.HandleEvent.apply(_)))
-    val loadDeparturesCmd = Cmd.Run(slCommandHandler.handle(SLCommand.GetDepartures(initialStation.id, model.slTransportTypeFilter)).map(Msg.HandleEvent.apply(_)))
-    (model, Cmd.Batch(loadStationsCmd, loadDeparturesCmd))
+    (model, Cmd.Batch(loadStationsCmd, initialStationCmd))
 
   def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
     case Msg.ExecuteCommand(cmd) => handleCommand(cmd, model)
@@ -42,30 +54,38 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
     cmd match
       case slCmd: SLCommand =>
         (model, Cmd.Run(slCommandHandler.handle(slCmd).map(Msg.HandleEvent.apply)))
-      case ModelUpdateCommand(updateFn) =>
-        (updateFn(model), Cmd.None)
       case _ =>
         (model, Cmd.None)
 
   private def handleEvent(event: AppEvent, model: Model): (Model, Cmd[IO, Msg]) =
     val (updatedModel, cmd) = event match
       case SLEvent.StationsLoaded(stations) =>
-        (model.updateStations(stations), Cmd.None)
-
+        val updatedModel = model.updateStations(stations)
+        val setStationCmd = Cmd.Run(IO.pure(Msg.HandleEvent(TyEvent.stationSelected(updatedModel.selectedStation))))
+        (updatedModel, setStationCmd)
+        
       case SLEvent.DeparturesLoaded(departures) =>
         (model.updateDepartures(departures), Cmd.None)
 
       case TyEvent.stationSelected(station) =>
+        model.copy(selectedStation = station)       
         val getDeparturesCmd = Cmd.Run(IO.pure(Msg.ExecuteCommand(SLCommand.GetDepartures(station.id, model.slTransportTypeFilter))))
+        
         val clearInputCmd = Cmd.Run(IO.delay {
           js.Dynamic.global.document
             .getElementById("search-input")
             .asInstanceOf[js.Dynamic]
             .value = ""
         }.as(Msg.NoOp))
-        (model.updateStation(station), Cmd.Batch(getDeparturesCmd, clearInputCmd))
+        (model.updateStation(station), Cmd.Batch(
+          Nav.pushUrl[IO](if model.subdomain.isEmpty then s"?stopId=${station.id}" else s"${model.subdomain}?stopId=${station.id}"),
+          getDeparturesCmd, clearInputCmd))
 
-
+      
+            
+      case TyEvent.UpdateDepartures =>
+        val getDeparturesCmd = Cmd.Run(IO.pure(Msg.ExecuteCommand(SLCommand.GetDepartures(model.selectedStation.id, model.slTransportTypeFilter))))
+        (model, getDeparturesCmd)
       case TyEvent.inputUpdated(term) =>
         (model.updateFilteredStations(term), Cmd.None)
       case TyEvent.TransportFilterUpdated(filter) =>
@@ -80,12 +100,20 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
   def router: Location => Msg = _ => Msg.NoOp
 
   def view(model: Model): Html[Msg] =
-    div(
-      button(onClick(Msg.ToggleAppMode))("Toggle App Mode"),
-      button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.All))))("All"),
-      button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.Bus))))("Bus"),
-      button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.Metro))))("Metro"),
-      if model.isTestMode then testModeView(model) else normalModeView(model)
+    div(cls:= "TyrianContent")(
+      div(cls := "header-button-container")(
+        //div(cls := "left-buttons")(
+        //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
+        //),
+        div(cls := "right-buttons")(
+        button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.All))))("All"),
+        button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.Bus))))("Bus"),
+        button(onClick(Msg.HandleEvent(TyEvent.TransportFilterUpdated(TransportType.Metro))))("Metro")
+        )
+      ),
+      div()(
+          if model.isTestMode then testModeView(model) else normalModeView(model)
+      )
     )
 
   private def normalModeView(model: Model): Html[Msg] =
@@ -159,5 +187,11 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
       )
     )
 
+
+  val tick: Sub[IO, Msg] = Sub.every[IO](30.second, "FetchDataTick").map(_ =>
+    Msg.HandleEvent(TyEvent.UpdateDepartures)
+  )
+  
   def subscriptions(model: Model): Sub[IO, Msg] =
-    Sub.None
+    Sub.Batch[IO, Msg](tick)
+    

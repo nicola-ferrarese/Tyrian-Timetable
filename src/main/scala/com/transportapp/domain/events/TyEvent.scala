@@ -7,4 +7,6 @@ enum TyEvent extends AppEvent:
   case stationSelected(station: Station)
   case inputUpdated(input: String)
   case TransportFilterUpdated(filter: TransportType)
+  case getStationName(stationId: String)
+  case UpdateDepartures
   case NoOp
