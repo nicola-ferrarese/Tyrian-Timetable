@@ -1,0 +1,101 @@
+classDiagram
+    class SL_Station {
+        +String id
+        +String name
+        +String transportType
+    }
+    class SL_Departure {
+        +String id
+        +String transportType
+        +String destination
+        +String scheduledTime
+        +String status
+    }
+
+
+    class Station {
+        +String id
+        +String name
+        +TransportType transportType
+    }
+    class Departure {
+        +String id
+        +TransportType transportType
+        +String destination
+        +LocalDateTime scheduledTime
+        +DepartureStatus status
+    }
+
+
+    SL_Station .. Station : Converted to
+    SL_Departure .. Departure : Converted to
+
+
+
+class Station {
++String id
++String name
+}
+
+class Departure {
++String line
++String destination
++TransportType transportType
++LocalDateTime scheduledTime
++LocalDateTime expectedTime
++String waitingTime
+}
+
+class Model {
++Either[String, List[Station]] slStations
++Option[List[Departure]] slDepartures
++Boolean isTestMode
++Station selectedStation
++String output
++Boolean searchVisible
++Option[List[Station]] slFilteredStations
++TransportType slTransportTypeFilter
++String subdomain
+}
+
+
+
+
+class TransportApi {
+<<interface>>
++loadStations() IO[Either[String, List[Station]]]
++loadDepartures(String stationId) IO[Option[List[Departure]]]
+}
+
+class SLApi {
++loadStations() IO[Either[String, List[Station]]]
++loadDepartures(String stationId, TransportType filter) IO[Option[List[Departure]]]
+}
+
+class TransportFacade {
+-SLApi slApi
++loadSLStations() IO[Either[String, List[Station]]]
++getSLDepartures(String stationId, TransportType filter) IO[Option[List[Departure]]]
+}
+
+class SLHandler {
+-TransportFacade transportFacade
++handle(SLCommand) IO[SLEvent]
+}
+
+class TransportApp {
++init(Map[String, String]) (Model, Cmd[IO, Msg])
++update(Model) Msg => (Model, Cmd[IO, Msg])
++view(Model) Html[Msg]
++subscriptions(Model) Sub[IO, Msg]
+}
+
+
+TransportApi <|.. SLApi
+TransportFacade --> SLApi
+SLHandler --> TransportFacade
+TransportApp --> SLHandler
+TransportApp --> Model
+TransportApp --> TransportFacade
+Model --> Station
+Model --> Departure

@@ -1,0 +1,72 @@
+classDiagram
+    class TransportType {
+        <<enumeration>>
+        All
+        Bus
+        Train
+        Ferry
+        Tram
+        Metro
+        Taxi
+        Ship
+    }
+
+    class Station {
+        +String id
+        +String name
+    }
+
+    class Departure {
+        +String line
+        +String destination
+        +TransportType transportType
+        +LocalDateTime scheduledTime
+        +LocalDateTime expectedTime
+        +String waitingTime
+    }
+
+
+
+    class Command {
+        <<interface>>
+    }
+
+    class SLCommand {
+        <<enumeration>>
+        LoadStations
+        GetDepartures(String stationId, TransportType filter)
+    }
+
+
+
+    class AppEvent {
+        <<interface>>
+    }
+
+    class SLEvent {
+        <<enumeration>>
+        StationsLoaded(Either[String, List[Station]] stations)
+        DeparturesLoaded(List[Departure] departures)
+        NoOp
+    }
+
+    class TyEvent {
+        <<enumeration>>
+        stationSelected(Station station)
+        inputUpdated(String input)
+        TransportFilterUpdated(TransportType filter)
+        getStationName(String stationId)
+        UpdateDepartures
+        NoOp
+    }
+
+    AppEvent <|-- TyEvent
+    Command <|-- SLCommand
+    AppEvent <|-- SLEvent
+
+    Departure --> TransportType
+    SLCommand --> TransportType
+    TyEvent --> TransportType
+    SLEvent --> Station
+    SLEvent --> Departure
+    TyEvent --> Station

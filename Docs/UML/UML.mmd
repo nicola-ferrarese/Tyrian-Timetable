@@ -1,211 +1,101 @@
-
 classDiagram
-
-    class TransportType {
-        <<enumeration>>
-        Bus
-        Airplane
+    class SL_Station {
+        +String id
+        +String name
+        +String transportType
+    }
+    class SL_Departure {
+        +String id
+        +String transportType
+        +String destination
+        +String scheduledTime
+        +String status
     }
     class Station {
         +String id
         +String name
-        +TransportType transportType
     }
     class Departure {
-        +String id
+        +String line
+        +String destination
         +TransportType transportType
-        +String destination
         +LocalDateTime scheduledTime
-        +DepartureStatus status
+        +LocalDateTime expectedTime
+        +String waitingTime
     }
-    class Arrival {
-        +String id
-        +String origin
-        +LocalDateTime scheduledTime
-        +DepartureStatus status
-    }
-    class Route {
-        +String id
-        +Station origin
-        +Station destination
-        +LocalDateTime scheduledDeparture
-        +LocalDateTime scheduledArrival
-        +DepartureStatus status
-    }
-    class DepartureStatus {
+    class TransportType {
         <<enumeration>>
-        OnTime
-        Delayed
-        Cancelled
+        All
+        Bus
+        Train
+        Ferry
+        Tram
+        Metro
+        Taxi
+        Ship
     }
-
-    class StationDTO {
-        +String id
-        +String name
-        +String transportType
+    class Model {
+        +Either[String, List[Station]] slStations
+        +Option[List[Departure]] slDepartures
+        +Station selectedStation
+        +TransportType slTransportTypeFilter
     }
-    class DepartureDTO {
-        +String id
-        +String transportType
-        +String destination
-        +String scheduledTime
-        +String status
+    class SLApi {
+        +loadStations() IO[Either[String, List[Station]]]
+        +loadDepartures(String, TransportType) IO[Option[List[Departure]]]
     }
-    class ArrivalDTO {
-        +String id
-        +String origin
-        +String scheduledTime
-        +String status
-    }
-    class RouteDTO {
-        +String id
-        +String originId
-        +String destinationId
-        +String scheduledDeparture
-        +String scheduledArrival
-        +String status
-    }
-
-    class Event {
-        <<interface>>
-    }
-
-    class BusEvent {
-        <<interface>>
-    }
-    class BusStationsLoaded {
-        +List~Station~ stations
-    }
-    class BusDeparturesLoaded {
-        +List~Departure~ departures
-    }
-
-    class AirplaneEvent {
-        <<interface>>
-    }
-    class AirportsLoaded {
-        +List~Station~ airports
-    }
-    class AirplaneDeparturesLoaded {
-        +List~Departure~ departures
-    }
-    class AirplaneArrivalsLoaded {
-        +List~Arrival~ arrivals
-    }
-
-    class Command {
-        <<interface>>
-    }
-
-    class BusCommand {
-        <<interface>>
-    }
-    class LoadBusStations {
-    }
-    class LoadBusDepartures {
-        +String stationId
-    }
-
-    class AirplaneCommand {
-        <<interface>>
-    }
-    class LoadAirports {
-    }
-    class LoadAirportDepartures {
-        +String airportId
-    }
-    class LoadAirportArrivals {
-        +String airportId
-    }
-    class CheckRoute {
-        +Station origin
-        +Station destination
-    }
-
-    class CommandHandler {
-        <<interface>>
-        +handle(Command) IO~Event~
-    }
-
-    class BusCommandHandler {
-        +handle(BusCommand) IO~BusEvent~
-    }
-
-    class AirplaneCommandHandler {
-        +handle(AirplaneCommand) IO~AirplaneEvent~
-    }
-
-    class TransportAPI {
-        <<interface>>
-        +loadStations() IO~List~StationDTO~~
-        +loadDepartures(String stationId) IO~List~DepartureDTO~~
-    }
-
-    class BusAPI {
-        -String apiKey
-        +loadStations() IO~List~StationDTO~~
-        +loadDepartures(String stationId) IO~List~DepartureDTO~~
-    }
-
-    class AirplaneAPI {
-        -String apiKey
-        +loadStations() IO~List~StationDTO~~
-        +loadDepartures(String airportId) IO~List~DepartureDTO~~
-        +loadArrivals(String airportId) IO~List~ArrivalDTO~~
-        +checkRoute(String originId, String destinationId) IO~RouteDTO~
-    }
-
     class TransportFacade {
-        -BusAPI busAPI
-        -AirplaneAPI airplaneAPI
-        +loadBusStations() IO~List~Station~~
-        +loadAirports() IO~List~Station~~
-        +loadBusDepartures(String stationId) IO~List~Departure~~
-        +loadAirportDepartures(String airportId) IO~List~Departure~~
-        +loadAirportArrivals(String airportId) IO~List~Arrival~~
-        +checkRoute(String originId, String destinationId) IO~Route~
+        -SLApi slApi
+        +loadSLStations() IO[Either[String, List[Station]]]
+        +getSLDepartures(String, TransportType) IO[Option[List[Departure]]]
     }
-
+    class SLCommand {
+        <<enumeration>>
+        LoadStations
+        GetDepartures(String, TransportType)
+    }
+    class SLEvent {
+        <<enumeration>>
+        StationsLoaded(Either[String, List[Station]])
+        DeparturesLoaded(List[Departure])
+    }
+    class TyEvent {
+        <<enumeration>>
+        stationSelected(Station)
+        TransportFilterUpdated(TransportType)
+        UpdateDepartures
+    }
+    class SLHandler {
+        -TransportFacade transportFacade
+        +handle(SLCommand) IO[SLEvent]
+    }
     class TransportApp {
-        +init() Tuple~Model,Cmd~IO,Msg~~
-        +update(Msg msg, Model model) Tuple~Model,Cmd~IO,Msg~~
-        +view(Model model) Html~Msg~
+        +init(Map[String, String]) (Model, Cmd[IO, Msg])
+        +update(Model) Msg => (Model, Cmd[IO, Msg])
+        +view(Model) Html[Msg]
     }
 
-    Event <|-- BusEvent
-    Event <|-- AirplaneEvent
-    BusEvent <|-- BusStationsLoaded
-    BusEvent <|-- BusDeparturesLoaded
-    AirplaneEvent <|-- AirportsLoaded
-    AirplaneEvent <|-- AirplaneDeparturesLoaded
-    AirplaneEvent <|-- AirplaneArrivalsLoaded
-
-    Command <|-- BusCommand
-    Command <|-- AirplaneCommand
-    BusCommand <|-- LoadBusStations
-    BusCommand <|-- LoadBusDepartures
-    AirplaneCommand <|-- LoadAirports
-    AirplaneCommand <|-- LoadAirportDepartures
-    AirplaneCommand <|-- LoadAirportArrivals
-    AirplaneCommand <|-- CheckRoute
-
-    CommandHandler <|.. BusCommandHandler
-    CommandHandler <|.. AirplaneCommandHandler
-
-    TransportAPI <|.. BusAPI
-    TransportAPI <|.. AirplaneAPI
-
-    TransportFacade --> BusAPI
-    TransportFacade --> AirplaneAPI
-
-    BusCommandHandler --> BusAPI
-    AirplaneCommandHandler --> AirplaneAPI
-
-    TransportApp --> TransportFacade
-    TransportApp --> CommandHandler
-
-    Station .. StationDTO
-    Departure .. DepartureDTO
-    Arrival .. ArrivalDTO
-    Route .. RouteDTO
-
+    SL_Station ..> Station : Converted to
+    SL_Departure ..> Departure : Converted to
+    Station --> TransportType
+    Departure --> TransportType
+    Model --> Station
+    Model --> Departure
+    Model --> TransportType
+    SLApi ..> SL_Station : Receives
+    SLApi ..> SL_Departure : Receives
+    TransportFacade --> SLApi : Uses
+    SLHandler --> TransportFacade : Uses
+    TransportApp --> Model : Updates
+    TransportApp --> SLHandler : Uses
+    TransportApp --> TransportFacade : Uses
+    SLCommand --> TransportType
+    SLEvent --> Station
+    SLEvent --> Departure
+    TyEvent --> Station
+    TyEvent --> TransportType
+    TransportApp ..> SLCommand : Generates
+    TransportApp ..> SLEvent : Handles
+    TransportApp ..> TyEvent : Handles
+    SLHandler ..> SLCommand : Receives
+    SLHandler ..> SLEvent : Produces
