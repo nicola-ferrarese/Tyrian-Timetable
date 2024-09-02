@@ -1,11 +1,9 @@
 package com.transportapp.presentation
 
 import com.transportapp.domain.models.{Departure, Station}
-import com.transportapp.application.commands.Command
 import com.transportapp.domain.models.TransportType
 
 
-case class ModelUpdateCommand(updateFn: Model => Model) extends Command
 
 case class Model(
       slStations : Either[String, List[Station]],
@@ -16,7 +14,7 @@ case class Model(
       searchVisible: Boolean = false,
       slFilteredStations:  Option[List[Station]] = None,
       slTransportTypeFilter: TransportType = TransportType.All,
-      subdomain: String = "",
+      subdomain: String = "Tyrian-Timetable",
                 )
 
 object Model:
