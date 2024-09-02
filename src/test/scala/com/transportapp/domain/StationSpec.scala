@@ -1,6 +1,6 @@
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import com.transportapp.domain.models.{Station}
+import com.transportapp.domain.models.Station
 
 class StationSpec extends AnyFlatSpec with Matchers {
 

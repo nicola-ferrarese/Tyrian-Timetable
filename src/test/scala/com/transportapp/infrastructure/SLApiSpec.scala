@@ -4,7 +4,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.concurrent.ScalaFutures
 import com.transportapp.infrastructure.api.SLApi
 
-import com.transportapp.domain.models.{SLStation, Station}
+import com.transportapp.domain.models.Station
+import com.transportapp.domain.models.slmodels.SLStation
 
 class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
   // Provide an  implicit runtime for IO operations
