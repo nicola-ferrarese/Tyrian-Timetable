@@ -3,15 +3,16 @@
 
 ## Overview
 This Transport App is a Scala-based application designed to provide real-time information about public transportation in Stockholm. It interfaces with the Stockholm Local (SL) API to fetch and display station information and departure times for various types of public transport.
+The architecture allows for reusability and modularity, in order to have freedom of choiche about data sources and the application itself, making it a proof-of-concept for a generic Tyrian Application.
 
 ## Architecture
 
 The application follows a clean architecture pattern, separating concerns into distinct layers:
 
-1. Presentation Layer: Handles user interface and interactions
-2. Application Layer: Manages business logic and use cases
-3. Domain Layer: Contains core business logic and entities
-4. Infrastructure Layer: Deals with external services and data sources
+1. _**Presentation Layer**_: Handles user interface and interactions
+2. _**Application Layer**_: Manages business logic and use cases
+3. _**Domain Layer**_: Contains core business logic and entities
+4. _**Infrastructure Layer**_: Deals with external services and data sources
 
 ### Application Overview
 
