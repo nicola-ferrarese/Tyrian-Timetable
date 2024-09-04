@@ -54,7 +54,7 @@ object Model:
         case _ => List.empty
 
     def updateFilteredStations(term: String): Model =
-      model.copy(slFilteredStations = Some(filterStations(term)), searchVisible=term.nonEmpty)
+      model.copy(slFilteredStations = Some(filterStations(term).take(6)), searchVisible=term.nonEmpty)
 
     def updateTransportTypeFilter(filter: TransportType): Model =
         model.copy(slTransportTypeFilter = filter)
