@@ -14,12 +14,13 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "io.indigoengine" %%% "tyrian-io" % tyrianVersion,
       "org.scalatest" %%% "scalatest" % "3.2.15" % Test,
+      "com.lihaoyi" %%% "utest" % "0.8.4" % Test,
+      "org.typelevel" %%% "cats-effect" % "3.2.9",
       "com.softwaremill.sttp.client4" %%% "core" % "4.0.0-M17",
       "com.softwaremill.sttp.client4" %%% "circe" % "4.0.0-M17",
-      "io.circe" %%% "circe-core" % "0.14.5",
       "io.circe" %%% "circe-generic" % "0.14.5",
-      "io.circe" %%% "circe-parser" % "0.14.5"
     ),
+    testFrameworks += new TestFramework("utest.runner.Framework"),
     scalacOptions ++= Seq(
       "-explain"
     ),
