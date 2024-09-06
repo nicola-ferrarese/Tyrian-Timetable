@@ -70,11 +70,11 @@ L'applicazione si integra con diverse API esterne per ottenere dati in tempo rea
 ### Tyrian
 Tyrian è un framework Scala.js per la creazione di applicazioni web single-page (SPA) reattive. Nel contesto di questo progetto, Tyrian gioca un ruolo fondamentale:
 
-- Architettura Model-View-Update (MVU): Tyrian implementa il pattern MVU, che facilita la gestione dello stato dell'applicazione e la sua sincronizzazione con l'interfaccia utente.
-- Componenti Reattivi: Permette di creare componenti UI reattivi che si aggiornano automaticamente in risposta ai cambiamenti di stato.
-- Gestione degli Eventi: Offre un sistema robusto per la gestione degli eventi utente e la loro traduzione in azioni che modificano lo stato dell'applicazione.
-- Integrazione con Scala.js: Sfrutta la potenza di Scala.js per compilare il codice Scala in JavaScript, consentendo l'esecuzione dell'applicazione direttamente nel browser.
-- Supporto per Effetti Collaterali: Fornisce meccanismi per gestire operazioni asincrone e effetti collaterali in modo funzionale e type-safe.
+- **Architettura Model-View-Update (MVU)**: Tyrian implementa il pattern MVU, che facilita la gestione dello stato dell'applicazione e la sua sincronizzazione con l'interfaccia utente.
+- **Componenti Reattivi**: Permette di creare componenti UI reattivi che si aggiornano automaticamente in risposta ai cambiamenti di stato.
+- **Gestione degli Eventi**: Offre un sistema robusto per la gestione degli eventi utente e la loro traduzione in azioni che modificano lo stato dell'applicazione.
+- **Integrazione con Scala.js**: Sfrutta la potenza di Scala.js per compilare il codice Scala in JavaScript, consentendo l'esecuzione dell'applicazione direttamente nel browser.
+- **Supporto per Effetti Collaterali**: Fornisce meccanismi per gestire operazioni asincrone e effetti collaterali in modo funzionale e type-safe.
 
 L'utilizzo di Tyrian nel progetto ha permesso di creare un'interfaccia utente reattiva e performante, mantenendo al contempo la type-safety e l'espressività di Scala. La sua integrazione con il nostro modello di dominio e l'approccio TDD ha facilitato lo sviluppo di un'applicazione robusta e facilmente testabile.
 Questa struttura del dominio, combinata con l'approccio di sviluppo basato su TDD e l'utilizzo di Tyrian, fornisce una base solida per lo sviluppo dell'applicazione, garantendo qualità, manutenibilità e una user experience ottimale.
