@@ -6,11 +6,13 @@ import com.transportapp.infrastructure.api.SLApi
 import scala.concurrent.duration.*
 
 class TransportFacade(SLApi: SLApi) {
-  private val Mode:  TransportType = TransportType.Bus
-  
+  private val Mode: TransportType = TransportType.Bus
+
   def loadSLStations: IO[Either[String, List[Station]]] =
     if (Mode == TransportType.Bus) {
-      def retryLoadStations(retriesLeft: Int): IO[Either[String, List[Station]]] = {
+      def retryLoadStations(
+          retriesLeft: Int
+      ): IO[Either[String, List[Station]]] = {
         println(s"Attempting to load bus stations. Retries left: $retriesLeft")
         SLApi.loadStations().flatMap {
           case Right(stations) =>
@@ -18,7 +20,11 @@ class TransportFacade(SLApi: SLApi) {
           case _ if retriesLeft > 0 =>
             IO.sleep(1.second) >> retryLoadStations(retriesLeft - 1)
           case Left(error) =>
-            IO.pure(Left(s"Failed to load stations after 3 attempts. Last error: $error"))
+            IO.pure(
+              Left(
+                s"Failed to load stations after 3 attempts. Last error: $error"
+              )
+            )
         }
       }
 
@@ -28,6 +34,9 @@ class TransportFacade(SLApi: SLApi) {
       IO.pure(Left("Mode is not Bus"))
     }
 
-  def getSLDepartures(stationId: String, filter: TransportType): IO[Option[List[Departure]]] =
-      SLApi.loadDepartures(stationId, filter)
-} 
+  def getSLDepartures(
+      stationId: String,
+      filter: TransportType
+  ): IO[Option[List[Departure]]] =
+    SLApi.loadDepartures(stationId, filter)
+}

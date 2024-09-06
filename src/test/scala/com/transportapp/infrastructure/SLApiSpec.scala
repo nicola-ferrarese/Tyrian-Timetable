@@ -7,13 +7,17 @@ import com.transportapp.infrastructure.api.SLApi
 import com.transportapp.domain.models.Station
 import com.transportapp.domain.models.slmodels.SLStation
 
-class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
+class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures {
   // Provide an  implicit runtime for IO operations
-  def convertToStation(station: SLStation): Station = {
+  def convertToStation(station: SLStation): Station =
     Station(name = station.name, id = station.id.toString)
-  }
   "SLStation to Station conversion" should "work for valid input" in {
-    val slStation = SLStation(id = 1, name = "Central Station", lat = Some(59.3293), lon = Some(18.0686))
+    val slStation = SLStation(
+      id = 1,
+      name = "Central Station",
+      lat = Some(59.3293),
+      lon = Some(18.0686)
+    )
     val station = SLApi().convertToStation(slStation)
 
     station.id shouldBe "1"
@@ -22,7 +26,8 @@ class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
   }
 
   it should "handle stations with missing coordinates" in {
-    val slStation = SLStation(id = 2, name = "North Station", lat = None, lon = None)
+    val slStation =
+      SLStation(id = 2, name = "North Station", lat = None, lon = None)
     val station = convertToStation(slStation)
 
     station.id shouldBe "2"
@@ -31,7 +36,12 @@ class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
 
   it should "handle stations with very long names" in {
     val longName = "A" * 100 // 100 character long name
-    val slStation = SLStation(id = 3, name = longName, lat = Some(59.3293), lon = Some(18.0686))
+    val slStation = SLStation(
+      id = 3,
+      name = longName,
+      lat = Some(59.3293),
+      lon = Some(18.0686)
+    )
     val station = convertToStation(slStation)
 
     station.id shouldBe "3"
@@ -41,7 +51,12 @@ class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
 
   it should "handle stations with special characters in names" in {
     val specialName = "Stätion №1 (Söder)"
-    val slStation = SLStation(id = 4, name = specialName, lat = Some(59.3293), lon = Some(18.0686))
+    val slStation = SLStation(
+      id = 4,
+      name = specialName,
+      lat = Some(59.3293),
+      lon = Some(18.0686)
+    )
     val station = convertToStation(slStation)
 
     station.id shouldBe "4"
@@ -56,7 +71,12 @@ class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
 
   it should "handle conversion of maximum possible ID" in {
     val maxId = Int.MaxValue
-    val slStation = SLStation(id = maxId, name = "Max ID Station", lat = Some(59.3293), lon = Some(18.0686))
+    val slStation = SLStation(
+      id = maxId,
+      name = "Max ID Station",
+      lat = Some(59.3293),
+      lon = Some(18.0686)
+    )
     val station = convertToStation(slStation)
 
     station.id shouldBe maxId.toString
@@ -65,7 +85,12 @@ class SLApiSpec extends AnyFlatSpec with Matchers with ScalaFutures{
 
   it should "handle conversion of minimum possible ID" in {
     val minId = 0 // Assuming 0 is a valid ID
-    val slStation = SLStation(id = minId, name = "Min ID Station", lat = Some(59.3293), lon = Some(18.0686))
+    val slStation = SLStation(
+      id = minId,
+      name = "Min ID Station",
+      lat = Some(59.3293),
+      lon = Some(18.0686)
+    )
     val station = convertToStation(slStation)
 
     station.id shouldBe minId.toString

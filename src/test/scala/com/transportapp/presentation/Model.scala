@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 class ModelSpec extends AnyFunSpec with Matchers {
   describe("Model") {
     val initialStation = Station("1", "Central Station")
-    var model = Model.initial.updateStation(initialStation)
+    var model          = Model.initial.updateStation(initialStation)
 
     it("should have default values in the initial model") {
       model.slStations shouldBe Left("No data")
@@ -20,17 +20,23 @@ class ModelSpec extends AnyFunSpec with Matchers {
       model.slTransportTypeFilter shouldBe TransportType.All
     }
 
-
     it("should update the selected station") {
       val newStation = Station("2", "North Station")
-      val updatedModel = model.updateStations(Right(List(newStation, initialStation))).updateStation(newStation)
+      val updatedModel = model
+        .updateStations(Right(List(newStation, initialStation)))
+        .updateStation(newStation)
       updatedModel.selectedStation shouldBe newStation
       updatedModel.searchVisible shouldBe false
     }
 
     it("should update the list of stations") {
-      model = model.copy(slStations = Right(List(Station("1", "Central Station"), Station("2", "North Station"))))
-      val stations = List(Station("1", "East Station"), Station("2", "West Station"))
+      model = model.copy(slStations =
+        Right(
+          List(Station("1", "Central Station"), Station("2", "North Station"))
+        )
+      )
+      val stations =
+        List(Station("1", "East Station"), Station("2", "West Station"))
       val updatedModel = model.updateStations(Right(stations))
       updatedModel.slStations shouldBe Right(stations)
     }
@@ -46,7 +52,7 @@ class ModelSpec extends AnyFunSpec with Matchers {
     }
 
     it("should update the output string") {
-      val output = "Test output"
+      val output       = "Test output"
       val updatedModel = model.updateOutput(output)
       updatedModel.output shouldBe output
     }
@@ -66,10 +72,13 @@ class ModelSpec extends AnyFunSpec with Matchers {
     }
 
     it("should update the filtered stations list") {
-      val stations = List(Station("1", "Central Station"), Station("2", "North Station"))
+      val stations =
+        List(Station("1", "Central Station"), Station("2", "North Station"))
       val modelWithStations = model.updateStations(Right(stations))
       val updatedModel = modelWithStations.updateFilteredStations("Central")
-      updatedModel.slFilteredStations shouldBe Some(List(Station("1", "Central Station")))
+      updatedModel.slFilteredStations shouldBe Some(
+        List(Station("1", "Central Station"))
+      )
       updatedModel.searchVisible shouldBe true
     }
 

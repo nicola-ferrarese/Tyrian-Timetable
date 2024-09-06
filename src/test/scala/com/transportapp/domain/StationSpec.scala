@@ -11,13 +11,13 @@ class StationSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "not allow creation with empty id" in {
-    an [IllegalArgumentException] should be thrownBy {
+    an[IllegalArgumentException] should be thrownBy {
       Station("", "Central Station")
     }
   }
 
   it should "not allow creation with empty name" in {
-    an [IllegalArgumentException] should be thrownBy {
+    an[IllegalArgumentException] should be thrownBy {
       Station("1", "")
     }
   }
