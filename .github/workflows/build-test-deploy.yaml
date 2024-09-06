@@ -46,6 +46,7 @@ jobs:
         run: |
           mkdir -p public
           cp -R dist/* public/
+          mkdir -p public/docs
           cp -R docs/build/* public/docs/
 
       # Deploy to GitHub Pages
