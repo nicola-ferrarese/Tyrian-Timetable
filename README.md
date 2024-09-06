@@ -321,7 +321,6 @@ This diagram provides a detailed view of how core components interact, including
 - `Station` and `Departure`: Domain entities representing transport stations and departures.
 
 
-- 
 ### Getting Started
 To run this project locally, follow these steps:
 - Ensure you have sbt (Scala Build Tool) and yarn installed on your system.

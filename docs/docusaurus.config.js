@@ -61,8 +61,9 @@ const config = {
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
       navbar: {
-        title: 'Transport Traker App',
+        title: 'Transport Tracker App',
         logo: {
+          href: 'https://nicola-ferrarese.github.io/Tyrian-Timetable/',
           alt: 'My Site Logo',
           src: 'img/tyrian.svg',
         },
