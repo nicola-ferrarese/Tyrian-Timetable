@@ -33,13 +33,13 @@ jobs:
         # Build Docusaurus docs
       - name: Install dependencies for Docusaurus
         run: |
-          cd docs  
-          yarn install
+          cd docs
+          npm install
 
       - name: Build Docusaurus
         run: |
           cd docs
-          yarn build
+          npm run build
 
       # Combine outputs
       - name: Prepare deployment
