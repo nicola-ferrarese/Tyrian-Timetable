@@ -30,21 +30,21 @@ jobs:
       - name: Build with Parcel
         run: yarn build
 
-          # Build Docusaurus docs
+        # Build Docusaurus docs
       - name: Install dependencies for Docusaurus
         run: |
-          cd docs  # adjust this path if your docs are in a different directory
+          cd docs  
           yarn install
 
       - name: Build Docusaurus
         run: |
-          cd docs  # adjust this path if your docs are in a different directory
+          cd docs
           yarn build
 
       # Combine outputs
       - name: Prepare deployment
         run: |
-           mkdir -p public
+          mkdir -p public
           cp -R dist/* public/
           cp -R docs/build/* public/docs/
 
