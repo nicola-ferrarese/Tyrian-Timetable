@@ -1,6 +1,4 @@
 # Stockholm Transit Tracker
-[![Open in Github Pages](https://img.shields.io/badge/Open%20in-Github%20Pages-purple?logo=github)](https://nicola-ferrarese.github.io/Tyrian-Timetable/)
-
 ## Overview
 This Transport App is a Scala-based application designed to provide real-time information about public transportation in Stockholm. It interfaces with the Stockholm Local (SL) API to fetch and display station information and departure times for various types of public transport.
 The architecture allows for reusability and modularity, in order to have freedom of choiche about data sources and the application itself, making it a proof-of-concept for a generic Tyrian Application.
