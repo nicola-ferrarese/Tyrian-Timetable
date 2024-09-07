@@ -27,10 +27,11 @@ object Model:
       model.copy(selectedStation = CheckedStation, searchVisible = false)
 
     def updateStations(stations: Either[String, List[Station]]): Model =
-      model.copy(slStations = stations)
+      model.updateOutput(stations.toString).copy(slStations = stations)
 
     def updateDepartures(departures: List[Departure]): Model =
-      model.copy(slDepartures = Some(departures))
+      model
+        .copy(slDepartures = Some(departures))
 
     def updateOutput(output: String): Model =
       model.copy(output = output)
