@@ -7,7 +7,7 @@ import cats.effect.IO
 import sttp.client4.fetch.FetchBackend
 import sttp.client4.*
 import sttp.client4.circe.*
-import io.circe.generic.auto.*
+import io.circe.generic.auto.deriveDecoder
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
