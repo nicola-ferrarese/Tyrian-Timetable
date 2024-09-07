@@ -22,7 +22,8 @@ lazy val root = project
     ),
     testFrameworks += new TestFramework("utest.runner.Framework"),
     scalacOptions ++= Seq(
-      "-explain"
+      "-explain",
+      "-Xmax-inlines:100"
     ),
     // For running Scala.js tests
     Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
