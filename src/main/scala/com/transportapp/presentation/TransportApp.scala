@@ -8,7 +8,7 @@ import com.transportapp.infrastructure.facades.TransportFacade
 import com.transportapp.infrastructure.api.SLApi
 import com.transportapp.domain.models.{Departure, Station}
 import com.transportapp.application.commands.*
-import com.transportapp.application.handlers.SLHandler
+import com.transportapp.application.handlers.*
 import com.transportapp.domain.events.*
 import scala.concurrent.duration.DurationInt
 
@@ -18,9 +18,10 @@ import com.transportapp.domain.models.TransportType
 
 @JSExportTopLevel("TyrianApp")
 object TransportApp extends TyrianIOApp[Msg, Model]:
-  private val slApi            = SLApi()
-  private val transportFacade  = TransportFacade(slApi)
-  private val slCommandHandler = SLHandler(transportFacade)
+  private val slApi                  = SLApi()
+  private val transportFacade        = TransportFacade(slApi)
+  private val slCommandHandler       = SLHandler(transportFacade)
+  private val resRobotCommandHandler = ResRobotHandler(transportFacade)
 
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val initialStation = Station("1183", "Professorsslingan")
@@ -56,6 +57,15 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         (
           model,
           Cmd.Run(slCommandHandler.handle(slCmd).map(Msg.HandleEvent.apply))
+        )
+      case resRobotCmd: ResRobotCommand =>
+        (
+          model,
+          Cmd.Run(
+            resRobotCommandHandler
+              .handle(resRobotCmd)
+              .map(Msg.HandleEvent.apply)
+          )
         )
       case _ =>
         (model, Cmd.None)
@@ -142,9 +152,9 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
   def view(model: Model): Html[Msg] =
     div(cls := "TyrianContent")(
       div(cls := "header-button-container")(
-        // div(cls := "left-buttons")(
-        //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
-        // ),
+        div(cls := "left-buttons")(
+          button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
+        ),
         div(cls := "right-buttons")(
           button(
             onClick(
@@ -252,6 +262,18 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           Msg.ExecuteCommand(SLCommand.GetDepartures("1183", TransportType.All))
         )
       )("Load Bus Departures"),
+      button(
+        onClick(
+          Msg.ExecuteCommand(ResRobotCommand.LoadStations)
+        )
+      )("Load ResRobot Stations"),
+      button(
+        onClick(
+          Msg.ExecuteCommand(
+            ResRobotCommand.GetDepartures("740046160", TransportType.All)
+          )
+        )
+      )("Load ResRobot Departures"),
       div(
         h2("API Responses"),
         pre(model.output)
