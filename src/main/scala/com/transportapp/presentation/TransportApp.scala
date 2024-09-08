@@ -175,7 +175,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
     div(cls := "TyrianContent")(
       div(cls := "header-button-container")(
         div(cls := "left-buttons")(
-        //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
+          //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
         ),
         div(cls := "right-buttons")(
           button(
@@ -197,9 +197,9 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           )("Metro")
         )
       ),
-      //div()(
+      // div()(
       //  if model.isTestMode then testModeView(model) else normalModeView(model)
-      //)
+      // )
       div()(
         normalModeView(model)
       )
@@ -277,7 +277,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         }
       )
     )
-/*
+  /*
   private def testModeView(model: Model): Html[Msg] =
     div(
       h1("Test Mode"),
@@ -306,7 +306,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         pre(model.output)
       )
     )
-*/
+   */
   val tick: Sub[IO, Msg] = Sub
     .every[IO](30.second, "FetchDataTick")
     .map(_ => Msg.HandleEvent(TyEvent.UpdateDepartures))
