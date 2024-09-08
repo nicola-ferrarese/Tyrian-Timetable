@@ -18,10 +18,8 @@ import com.transportapp.domain.models.TransportType
 
 @JSExportTopLevel("TyrianApp")
 object TransportApp extends TyrianIOApp[Msg, Model]:
-  private val transportFacade        = TransportFacade()
-  private val slCommandHandler       = SLHandler(transportFacade)
-  private val resRobotCommandHandler = ResRobotHandler(transportFacade)
-  private val apiCommandHandler      = ApiHandler(transportFacade)
+  private val transportFacade   = TransportFacade()
+  private val apiCommandHandler = ApiHandler(transportFacade)
 
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val initialStation = Station("1183", "Professorsslingan")
@@ -60,21 +58,6 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
             apiCommandHandler.handle(apiCommand).map(Msg.HandleEvent.apply)
           )
         )
-
-      case slCmd: SLCommand =>
-        (
-          model,
-          Cmd.Run(slCommandHandler.handle(slCmd).map(Msg.HandleEvent.apply))
-        )
-      case resRobotCmd: ResRobotCommand =>
-        (
-          model,
-          Cmd.Run(
-            resRobotCommandHandler
-              .handle(resRobotCmd)
-              .map(Msg.HandleEvent.apply)
-          )
-        )
       case _ =>
         (model, Cmd.None)
 
@@ -95,20 +78,6 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         (updatedModel, setStationCmd)
 
       case ApiEvent.DeparturesLoaded(departures) =>
-        (model.updateDepartures(departures), Cmd.None)
-
-      case SLEvent.StationsLoaded(stations) =>
-        val updatedModel = model.updateStations(stations)
-        val setStationCmd = Cmd.Run(
-          IO.pure(
-            Msg.HandleEvent(
-              TyEvent.stationSelected(updatedModel.selectedStation)
-            )
-          )
-        )
-        (updatedModel, setStationCmd)
-
-      case SLEvent.DeparturesLoaded(departures) =>
         (model.updateDepartures(departures), Cmd.None)
 
       case TyEvent.stationSelected(station) =>
@@ -174,9 +143,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
   def view(model: Model): Html[Msg] =
     div(cls := "TyrianContent")(
       div(cls := "header-button-container")(
-        div(cls := "left-buttons")(
-          //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
-        ),
+        div(cls := "left-buttons")(),
         div(cls := "right-buttons")(
           button(
             onClick(
@@ -197,14 +164,11 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           )("Metro")
         )
       ),
-      // div()(
-      //  if model.isTestMode then testModeView(model) else normalModeView(model)
-      // )
       normalModeView(model)
     )
 
   private def normalModeView(model: Model): Html[Msg] =
-    div(cls:= "normalView")(
+    div(cls := "normalView")(
       tyrian.Html.h2("Stockholm Transit Tracker"),
       div(cls := "header-container")(
         tyrian.Html.span(cls := "current-stop")(
@@ -275,36 +239,6 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         }
       )
     )
-  /*
-  private def testModeView(model: Model): Html[Msg] =
-    div(
-      h1("Test Mode"),
-      button(onClick(Msg.ExecuteCommand(SLCommand.LoadStations)))(
-        "Load Bus Stations"
-      ),
-      button(
-        onClick(
-          Msg.ExecuteCommand(SLCommand.GetDepartures("1183", TransportType.All))
-        )
-      )("Load Bus Departures"),
-      button(
-        onClick(
-          Msg.ExecuteCommand(ResRobotCommand.LoadStations)
-        )
-      )("Load ResRobot Stations"),
-      button(
-        onClick(
-          Msg.ExecuteCommand(
-            ResRobotCommand.GetDepartures("740046160", TransportType.All)
-          )
-        )
-      )("Load ResRobot Departures"),
-      div(
-        h2("API Responses"),
-        pre(model.output)
-      )
-    )
-   */
   val tick: Sub[IO, Msg] = Sub
     .every[IO](30.second, "FetchDataTick")
     .map(_ => Msg.HandleEvent(TyEvent.UpdateDepartures))

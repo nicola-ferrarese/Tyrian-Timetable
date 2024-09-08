@@ -1,19 +1,19 @@
 import utest._
 import cats.effect.IO
 import com.transportapp.infrastructure.facades.TransportFacade
-import com.transportapp.application.commands.SLCommand
+import com.transportapp.application.commands.ApiCommand
 import com.transportapp.domain.events.SLEvent
 import com.transportapp.domain.models.{Departure, Station, TransportType}
-import com.transportapp.application.handlers.SLHandler
+import com.transportapp.application.handlers.ApiHandler
 import cats.effect.unsafe.implicits.global
 import java.time.LocalDateTime
 import scala.concurrent.{Future, ExecutionContext}
 
-object SLHandlerSpec extends TestSuite {
+object ApiHandlerSpec extends TestSuite {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   def tests = Tests {
-    test("SLHandler") {
+    test("ApiHandler") {
       // Use a fixed timestamp for testing
       val fixedTimestamp = LocalDateTime.of(2023, 1, 1, 12, 0)
 
@@ -33,7 +33,7 @@ object SLHandlerSpec extends TestSuite {
               )
             )
           )
-      ): SLHandler = {
+      ): ApiHandler = {
         val mockFacade = new TransportFacade() {
           override def loadSLStations: IO[Either[String, List[Station]]] =
             IO.pure(stations)
@@ -42,7 +42,7 @@ object SLHandlerSpec extends TestSuite {
               filter: TransportType
           ): IO[Option[List[Departure]]] = IO.pure(departures)
         }
-        new SLHandler(mockFacade)
+        new ApiHandler(mockFacade)
       }
 
       def runIO[A](io: IO[A]): Future[A] =
@@ -50,7 +50,7 @@ object SLHandlerSpec extends TestSuite {
 
       test("return StationsLoaded event when LoadStations command is given") {
         val eventFuture =
-          runIO(createMockFacadeAndHandler().handle(SLCommand.LoadStations))
+          runIO(createMockFacadeAndHandler().handle(ApiCommand.LoadStations))
         eventFuture.map { event =>
           assert(
             event == SLEvent.StationsLoaded(
@@ -65,7 +65,7 @@ object SLHandlerSpec extends TestSuite {
       ) {
         val eventFuture = runIO(
           createMockFacadeAndHandler().handle(
-            SLCommand.GetDepartures("1", TransportType.All)
+            ApiCommand.GetDepartures("1", TransportType.All)
           )
         )
         eventFuture.map { event =>
@@ -92,7 +92,7 @@ object SLHandlerSpec extends TestSuite {
       ) {
         val eventFuture = runIO(
           createMockFacadeAndHandler(departures = None).handle(
-            SLCommand.GetDepartures("invalid", TransportType.All)
+            ApiCommand.GetDepartures("invalid", TransportType.All)
           )
         )
         eventFuture.map { event =>
@@ -105,7 +105,7 @@ object SLHandlerSpec extends TestSuite {
       ) {
         val eventFuture = runIO(
           createMockFacadeAndHandler(stations = Left("Failed to load stations"))
-            .handle(SLCommand.LoadStations)
+            .handle(ApiCommand.LoadStations)
         )
         eventFuture.map { event =>
           assert(

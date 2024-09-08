@@ -7,6 +7,34 @@ sidebar_label: Detailed Design
 
 Il design dettagliato dell'applicazione Stockholm Transit Tracker si basa su quattro layer principali, seguendo i principi della Clean Architecture. Ogni layer ha responsabilità specifiche e interagisce con gli altri in modo definito.
 
+I componenti principali sono:
+- **Presentation Layer**: gestisce l'interfaccia utente e le interazioni.
+- **Application Layer**: gestisce la logica di business e i casi d'uso.
+- **Domain Layer**: contiene la logica di business core e le entità del dominio.
+- **Infrastructure Layer**: si occupa dei servizi esterni e delle fonti di dati.
+
+## Interazioni tra Componenti
+
+```mermaid
+sequenceDiagram
+    participant TransportApp
+    participant Model
+    participant ApiHandler
+    participant TransportFacade
+    participant SLApi
+
+    TransportApp->>ApiHandler: Esegue ApiCommand
+    ApiHandler->>TransportFacade: Richiede dati
+    TransportFacade->>SLApi: Chiama API esterna
+    TransportFacade->>RRApi: Chiama API esterna
+    SLApi-->>TransportFacade: Restituisce dati
+    RRApi-->>TransportFacade: Restituisce dati
+    TransportFacade-->>ApiHandler: Restituisce risultato
+    ApiHandler-->>TransportApp: Produce SLEvent
+    TransportApp->>Model: Aggiorna stato
+    TransportApp->>TransportApp: Aggiorna vista
+```
+
 ## 1. Presentation Layer
 
 Il Presentation Layer è responsabile dell'interfaccia utente e delle interazioni con l'utente.
@@ -34,7 +62,9 @@ classDiagram
     class Html {
         <<interface>>
     }
-    TransportApp --> Html : generates
+    TransportApp <--> TransportFacade : uses
+    Model --> Html : generates
+    TransportApp --> Model : contains
 ```
 
 ## 2. Application Layer
@@ -42,7 +72,7 @@ classDiagram
 L'Application Layer gestisce la logica di business e coordina le interazioni tra il Presentation Layer e il Domain Layer.
 
 ### Componenti Principali
-- `SLHandler`: Processa i comandi e genera eventi relativi ai dati SL.
+- `ApiHandler`: Processa i comandi e genera eventi relativi alle Api, reindirizzandoli alla Facade opportuna.
 - `Model`: Rappresenta lo stato dell'applicazione.
 
 ### Responsabilità
@@ -55,30 +85,37 @@ L'Application Layer gestisce la logica di business e coordina le interazioni tra
 
 ```mermaid
 classDiagram
-    class SLHandler {
-        -TransportFacade transportFacade
+    class TransportFacade {
+        +loadSLStations() IO[Either[String, List[Station]]]
+        +getSLDepartures(String, TransportType) IO[Option[List[Departure]]]
+    }
+    class ApiHandler {
         +handle(SLCommand) IO[SLEvent]
     }
-    class Model {
+    class TransportApp {
         +Either[String, List[Station]] slStations
         +Option[List[Departure]] slDepartures
         +Station selectedStation
         +TransportType slTransportTypeFilter
     }
-    class SLCommand {
+    class ApiCommand {
         <<enumeration>>
         LoadStations
         GetDepartures(String, TransportType)
     }
-    class SLEvent {
+    class ApiEvent {
         <<enumeration>>
         StationsLoaded(Either[String, List[Station]])
         DeparturesLoaded(List[Departure])
     }
-    SLHandler --> SLCommand : processes
-    SLHandler --> SLEvent : generates
-    Model --> Station : contains
-    Model --> Departure : contains
+    TransportFacade --> SLApi : uses
+    TransportFacade --> RRApi : uses
+    ApiHandler <--> TransportFacade: uses 
+    ApiHandler <--> TransportApp : sends events
+    ApiHandler --> ApiCommand : processes
+    ApiHandler --> ApiEvent : generates
+    TransportApp --> Stations : contains
+    TransportApp --> Departures : contains
 ```
 
 ## 3. Domain Layer
@@ -110,6 +147,7 @@ classDiagram
         +LocalDateTime scheduledTime
         +LocalDateTime expectedTime
         +String waitingTime
+        +String Operator
     }
     class TransportType {
         <<enumeration>>
@@ -152,14 +190,24 @@ classDiagram
         +loadStations() IO[Either[String, List[Station]]]
         +loadDepartures(String, TransportType) IO[Option[List[Departure]]]
     }
+    class RRApi {
+        +loadStations() IO[Either[String, List[Station]]]
+        +loadDepartures(String, TransportType) IO[Option[List[Departure]]]
+    }
     class TransportFacade {
         -SLApi slApi
         +loadSLStations() IO[Either[String, List[Station]]]
         +getSLDepartures(String, TransportType) IO[Option[List[Departure]]]
     }
     TransportApi <|.. SLApi
+    TransportApi <|.. RRApi
     TransportFacade --> SLApi : uses
+    TransportFacade --> RRApi : uses
 ```
+
+
+
+
 
 Utilizzo di DTO per l'Astrazione delle Sorgenti Dati
 Un aspetto chiave dell'Infrastructure Layer è l'utilizzo di Data Transfer Objects (DTO) nell' applicazione **SLStation** e **SLDeparture**. Questi DTO agiscono come intermediari tra le API esterne e il modello di dominio dell'applicazione.
@@ -168,7 +216,6 @@ classDiagram
 class SL_Station {
 +String id
 +String name
-+String transportType
 }
 class SL_Departure {
 +String id
@@ -177,6 +224,23 @@ class SL_Departure {
 +String scheduledTime
 +String status
 }
+class RR_Station {
+    +extId String
+    +name String
+}
+class RR_Departure {
+    +direction String
+    +time String
+    +date String
+    +ProductAtStop RRProduct
+}
+class RRProduct {
+    +line String
+    +operator String
+    +catOut String (category)
+}
+    
+    
 class Station {
 +String id
 +String name
@@ -192,6 +256,9 @@ class Departure {
 }
 SL_Station ..> Station : Converted to
 SL_Departure ..> Departure : Converted to
+RR_Station ..> Station : Converted to
+RR_Departure ..> Departure : Converted to
+RRProduct ..> RR_Departure : included in
 ```
 
 L'utilizzo di questi DTO offre diversi vantaggi:
@@ -201,35 +268,3 @@ L'utilizzo di questi DTO offre diversi vantaggi:
 - **_Unificazione_**: Consentono di unificare dati provenienti da diverse sorgenti (es. SL, altre compagnie di trasporto) in un unico modello coerente.
 - **_Evoluzione Indipendente_**: Il modello di dominio può evolvere indipendentemente dai cambiamenti nelle API esterne.
 
-## Interazioni tra i Layer
-
-Le interazioni tra i layer seguono un flusso specifico:
-
-1. Il Presentation Layer cattura le azioni dell'utente e le traduce in comandi.
-2. I comandi vengono inviati all'Application Layer, che li processa utilizzando l'SLHandler.
-3. L'SLHandler interagisce con il Domain Layer per eseguire la logica di business e con l'Infrastructure Layer per accedere ai dati esterni.
-4. I risultati vengono restituiti all'Application Layer sotto forma di eventi.
-5. L'Application Layer aggiorna il Model in base agli eventi.
-6. Il Presentation Layer viene notificato dei cambiamenti e aggiorna la vista di conseguenza.
-
-### Diagramma delle Interazioni
-
-```mermaid
-sequenceDiagram
-    participant PL as Presentation Layer
-    participant AL as Application Layer
-    participant DL as Domain Layer
-    participant IL as Infrastructure Layer
-    
-    PL->>AL: Invia comando (es. LoadStations)
-    AL->>IL: Richiede dati
-    IL->>IL: Chiama API esterna
-    IL-->>AL: Restituisce dati grezzi
-    AL->>DL: Converte in entità di dominio
-    DL-->>AL: Restituisce entità
-    AL->>AL: Genera evento (es. StationsLoaded)
-    AL-->>PL: Notifica cambiamento di stato
-    PL->>PL: Aggiorna vista
-```
-
-Questa struttura a layer garantisce una separazione chiara delle responsabilità, facilitando la manutenzione, il testing e l'estensione dell'applicazione. Ogni layer ha un ruolo ben definito e comunica con gli altri attraverso interfacce chiaramente definite, promuovendo un design modulare e flessibile.
