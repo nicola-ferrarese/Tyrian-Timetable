@@ -200,13 +200,12 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
       // div()(
       //  if model.isTestMode then testModeView(model) else normalModeView(model)
       // )
-      div()(
-        normalModeView(model)
-      )
+      normalModeView(model)
+
     )
 
   private def normalModeView(model: Model): Html[Msg] =
-    div(
+    div()(
       tyrian.Html.h2("Stockholm Transit Tracker"),
       div(cls := "header-container")(
         tyrian.Html.span(cls := "current-stop")(

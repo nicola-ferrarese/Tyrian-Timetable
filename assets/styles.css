@@ -12,11 +12,15 @@
     text-align: center;
 }
 
+.TyrianContent{
+    display: flex;
+    flex-direction: column;
+}
 body {
     margin: 0;
     padding: 1vw;
     font-family: "DangerOn","Ozone", "sans-serif";
-    font-size: 40px;
+    font-size: 37px;
     color: darkorange;
     background-color: #2f2c2c;
 }
@@ -81,6 +85,8 @@ tbody tr {
     min-width: 300px;
 
 }
+
+
 h2 {
     color: #ff9300;
     font-size: 40px;
@@ -177,25 +183,7 @@ button:hover {
     background-color: #0056b3;
 }
 
-@media (max-width: 600px) {
-    .button-container {
-        flex-direction: column;
-        align-items: stretch;
-    }
 
-    .left-buttons {
-        flex-direction: column;
-    }
-
-    .right-button {
-        margin-left: 0;
-        margin-top: 10px;
-    }
-
-    button {
-        width: 100%;
-    }
-}
 
 
 
