@@ -210,7 +210,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
       tyrian.Html.h2("Stockholm Transit Tracker"),
       div(cls := "header-container")(
         tyrian.Html.span(cls := "current-stop")(
-          s"From: ${model.selectedStation.name}"
+          s"From: ${model.selectedStation.name.replaceFirst("""\s*\([^)]*\)""", "")}"
         ),
         div(cls := "search-container")(
           input(
