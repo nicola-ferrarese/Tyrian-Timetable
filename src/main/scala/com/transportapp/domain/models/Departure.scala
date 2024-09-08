@@ -8,4 +8,5 @@ case class Departure(
     scheduledTime: LocalDateTime,
     expectedTime: LocalDateTime,
     waitingTime: String,
+    operator: String
 )

@@ -4,21 +4,21 @@ import com.transportapp.domain.models.{Departure, Station}
 import com.transportapp.domain.models.TransportType
 
 case class Model(
-    slStations: Either[String, List[Station]],
-    slDepartures: Option[List[Departure]],
+    Stations: Either[String, List[Station]],
+    Departures: Option[List[Departure]],
     isTestMode: Boolean = false,
     selectedStation: Station,
     output: String = "",
     searchVisible: Boolean = false,
-    slFilteredStations: Option[List[Station]] = None,
-    slTransportTypeFilter: TransportType = TransportType.All,
+    FilteredStations: Option[List[Station]] = None,
+    TransportTypeFilter: TransportType = TransportType.All,
     subdomain: String = ""
 )
 
 object Model:
   val initial: Model = Model(
-    slStations = Left("No data"),
-    slDepartures = None,
+    Stations = Left("No data"),
+    Departures = None,
     selectedStation = Station("0", "No station selected")
   )
   extension (model: Model)
@@ -27,24 +27,26 @@ object Model:
       model.copy(
         selectedStation = CheckedStation,
         searchVisible = false,
-        slDepartures = None
+        Departures = None
       )
 
     def updateStations(stations: Either[String, List[Station]]): Model =
-      model.updateOutput(stations.toString).copy(slStations = stations)
+      model.updateOutput(stations.toString).copy(Stations = stations)
 
     def updateDepartures(newDepartures: List[Departure]): Model = {
       val allDepartures =
-        model.slDepartures.getOrElse(List.empty) ++ newDepartures
-      println(s"allDepartures: $newDepartures")
-      val dedupedDepartures = allDepartures
-        .groupBy(d => (d.line, d.destination, d.waitingTime, d.scheduledTime))
-        .values
-        .map(_.head)
-        .toList
-        .sortBy(_.scheduledTime)
+        (model.Departures.getOrElse(List.empty) ++ newDepartures)
+          .groupBy(d => (d.line, d.destination, d.waitingTime, d.scheduledTime))
+          .values
+          .map(_.head)
+          .toList
+          .sortBy(_.scheduledTime)
 
-      model.copy(slDepartures = Some(dedupedDepartures))
+      val filteredDepartures =
+        if (model.TransportTypeFilter == TransportType.All) allDepartures
+        else allDepartures.filter(_.transportType == model.TransportTypeFilter)
+
+      model.copy(Departures = Some(filteredDepartures))
     }
 
     def updateOutput(output: String): Model =
@@ -57,25 +59,25 @@ object Model:
       model.copy(isTestMode = !model.isTestMode)
 
     def updateFilteredStations(stations: List[Station]): Model =
-      model.copy(slFilteredStations = Some(stations))
+      model.copy(FilteredStations = Some(stations))
 
     private def filterStations(term: String): List[Station] =
-      model.slStations match
+      model.Stations match
         case Right(stations) =>
           stations.filter(_.name.toLowerCase.contains(term.toLowerCase))
         case _ => List.empty
 
     def updateFilteredStations(term: String): Model =
       model.copy(
-        slFilteredStations = Some(filterStations(term).take(6)),
+        FilteredStations = Some(filterStations(term).take(6)),
         searchVisible = term.nonEmpty
       )
 
     def updateTransportTypeFilter(filter: TransportType): Model =
-      model.copy(slTransportTypeFilter = filter)
+      model.copy(TransportTypeFilter = filter)
 
     private def getStation(stationId: String): Station =
-      model.slStations match
+      model.Stations match
         case Right(stations) =>
           stations.find(_.id == stationId) match
             case station =>

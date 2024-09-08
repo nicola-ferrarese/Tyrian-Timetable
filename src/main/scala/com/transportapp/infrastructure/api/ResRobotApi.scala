@@ -125,7 +125,8 @@ class ResRobotApi extends TransportApi:
         transportType = convertRRTransportType(departure.ProductAtStop.catOut),
         scheduledTime = departureDateTime,
         expectedTime = departureDateTime,
-        waitingTime = waitingTime
+        waitingTime = waitingTime,
+        operator = departure.ProductAtStop.operator
       )
     } match {
       case Success(dep) => dep

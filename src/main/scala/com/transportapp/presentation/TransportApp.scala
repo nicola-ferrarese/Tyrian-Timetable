@@ -116,7 +116,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         val getDeparturesCmd = Cmd.Run(
           IO.pure(
             Msg.ExecuteCommand(
-              ApiCommand.GetDepartures(station.id, model.slTransportTypeFilter)
+              ApiCommand.GetDepartures(station.id, model.TransportTypeFilter)
             )
           )
         )
@@ -147,7 +147,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
             Msg.ExecuteCommand(
               ApiCommand.GetDepartures(
                 model.selectedStation.id,
-                model.slTransportTypeFilter
+                model.TransportTypeFilter
               )
             )
           )
@@ -175,7 +175,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
     div(cls := "TyrianContent")(
       div(cls := "header-button-container")(
         div(cls := "left-buttons")(
-          button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
+        //  button(onClick(Msg.ToggleAppMode))("Toggle App Mode")
         ),
         div(cls := "right-buttons")(
           button(
@@ -197,8 +197,11 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           )("Metro")
         )
       ),
+      //div()(
+      //  if model.isTestMode then testModeView(model) else normalModeView(model)
+      //)
       div()(
-        if model.isTestMode then testModeView(model) else normalModeView(model)
+        normalModeView(model)
       )
     )
 
@@ -222,7 +225,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
               }",
             id := "search-results"
           )(
-            model.slFilteredStations
+            model.FilteredStations
               .map { stations =>
                 stations.map { station =>
                   div(_class := "search-result-item")(
@@ -238,7 +241,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           )
         )
       ),
-      model.slDepartures.map(renderData(_, model)).getOrElse(div("No data"))
+      model.Departures.map(renderData(_, model)).getOrElse(div("No data"))
     )
 
   private def renderData(data: List[Departure], model: Model): Html[Msg] =
@@ -246,10 +249,11 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
       thead(
         tr(
           List(
-            Option.when(model.slTransportTypeFilter == TransportType.All)(
-              th("Type")
+            Option.when(model.TransportTypeFilter == TransportType.All)(
+              th(_class := "centeritem")("Type")
             ),
-            Some(th("Line")),
+            Some(th(_class := "centeritem")("    ")),
+            Some(th(_class := "centeritem")("Line")),
             Some(th("Destination")),
             Some(th("Est.Time"))
           ).flatten
@@ -259,11 +263,12 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         data.map { departure =>
           tr(
             List(
-              Option.when(model.slTransportTypeFilter == TransportType.All)(
+              Option.when(model.TransportTypeFilter == TransportType.All)(
                 td(_class := "centeritem")(
                   text(departure.transportType.toString)
                 )
               ),
+              Some(td(_class := "centeritem")(text(departure.operator))),
               Some(td(_class := "centeritem")(text(departure.line))),
               Some(td(text(departure.destination))),
               Some(td(_class := "centeritem")(text(departure.waitingTime)))
@@ -272,7 +277,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         }
       )
     )
-
+/*
   private def testModeView(model: Model): Html[Msg] =
     div(
       h1("Test Mode"),
@@ -301,7 +306,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         pre(model.output)
       )
     )
-
+*/
   val tick: Sub[IO, Msg] = Sub
     .every[IO](30.second, "FetchDataTick")
     .map(_ => Msg.HandleEvent(TyEvent.UpdateDepartures))

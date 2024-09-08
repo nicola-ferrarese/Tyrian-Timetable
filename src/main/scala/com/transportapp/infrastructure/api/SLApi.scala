@@ -94,7 +94,8 @@ class SLApi extends TransportApi:
         LocalDateTime.parse(slDeparture.scheduled, dateTimeFormatter),
       expectedTime =
         LocalDateTime.parse(slDeparture.expected, dateTimeFormatter),
-      waitingTime = slDeparture.display
+      waitingTime = slDeparture.display,
+      operator = "SL"
     )
 
   private def convertTransportType(mode: String): TransportType =
