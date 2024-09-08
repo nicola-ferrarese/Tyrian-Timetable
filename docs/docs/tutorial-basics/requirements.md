@@ -6,10 +6,10 @@ sidebar_label: Requirements
 # Requisiti
 
 ## Requisiti di Business
+- Supportare diverse fonti di dati e API di trasporto pubblico, uniformando le informazioni sotto un'unico dominio
 - Fornire informazioni in tempo reale su partenze e arrivi dei mezzi di trasporto pubblico
 - Migliorare l'esperienza degli utenti nell'utilizzo dei trasporti pubblici
 - Ridurre i tempi di attesa degli utenti fornendo informazioni accurate
-- Supportare diversi fonti di dati e API di trasporto pubblico, uniformando l'accesso alle informazioni
 
 ## Modello di Dominio
 - _Station_: rappresenta una fermata o un aeroporto
@@ -24,21 +24,20 @@ sidebar_label: Requirements
 - Visualizzare le partenze in tempo reale da una specifica stazione
 - Cercare stazioni per nome
 - Filtrare le partenze per tipo di trasporto
-- Visualizzare informazioni dettagliate su una specifica partenza
 
 ### Requisiti di Sistema
 - Integrare dati da diverse API di trasporto pubblico
 - Aggiornare automaticamente le informazioni sulle partenze ogni 30 secondi
 - Gestire errori di connessione alle API esterne
-- Supportare la scalabilità per gestire un elevato numero di richieste contemporanee
-
 ## Requisiti Non Funzionali
-- Performance: tempo di risposta dell'applicazione inferiore a 2 secondi
-- Affidabilità: disponibilità del sistema del 99.9%
-- Scalabilità: supporto fino a 10.000 utenti concorrenti
-- Sicurezza: protezione dei dati personali degli utenti
-- Usabilità: interfaccia intuitiva e responsive per dispositivi mobili e desktop
+- Performance: tempo di risposta dell'applicazione
+- Usabilità: 
+  - interfaccia intuitiva e responsive per dispositivi mobili e desktop
+  - Accesso ad una specifica partenza tramite URL
+- Affidabilità: gestione degli errori e delle eccezioni
+- Scalabilità: supporto per una facile estensione con nuove funzionalità ed API
+
 
 ## Requisiti di Implementazione
 - Scala 3.x
-- Tyrian indigo 0.11.x
+- Tyrian 0.11.x
