@@ -54,5 +54,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: public
-        env:
-          RES_ROBOT_TOKEN: ${{ secrets.API_KEY }}
+    env:
+      RES_ROBOT_TOKEN: ${{ secrets.API_KEY }}
