@@ -7,8 +7,10 @@ import sttp.client4.*
 import sttp.client4.circe.*
 import cats.implicits.*
 import io.circe.generic.auto.*
+import scala.util.{Try, Success, Failure}
+import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
+import java.time.temporal.ChronoUnit
 
-import java.time.LocalDateTime, java.time.Duration
 import java.time.format.DateTimeFormatter
 
 class ResRobotApi extends TransportApi:
@@ -19,8 +21,6 @@ class ResRobotApi extends TransportApi:
   )
   private val baseUrl  = "https://api.resrobot.se/v2.1"
   private val accessId = "31fc7aac-2151-4992-8857-db30d1927d9c"
-  private val dateTimeFormatter =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
 
   override def loadStations(): IO[Either[String, List[Station]]] = {
     val paramMap = Map(
@@ -57,11 +57,16 @@ class ResRobotApi extends TransportApi:
     }
   }
 
-  override def loadDepartures(stationId: String): IO[Option[List[Departure]]] =
+  override def loadDepartures(
+      stationId: String
+  ): IO[Option[List[Departure]]] = {
     val paramMap = Map(
-      "id"       -> stationId,
-      "format"   -> "json",
-      "accessId" -> accessId
+      "id"        -> stationId,
+      "format"    -> "json",
+      "accessId"  -> accessId,
+      "lang"      -> "en",
+      "operators" -> "!275",
+      "duration"  -> "120"
     )
 
     val request: Request[
@@ -71,29 +76,61 @@ class ResRobotApi extends TransportApi:
         .get(uri"$baseUrl/departureBoard?$paramMap")
         .response(asJson[RRDepartureResponse])
 
+    println(s"Request: $request")
+
     IO.fromFuture(IO(backend.send(request))).map { response =>
       response.body match {
         case Right(departureResponse: RRDepartureResponse) =>
-          departureResponse.Departure.map(convertToDeparture).toList match {
-            case departures if departures.nonEmpty => Some(departures)
-            case _ => println("No departures found"); None
+          val departures = departureResponse.Departure
+            .map { rrDeparture =>
+              val departure = convertToDeparture(rrDeparture)
+              departure
+            }
+            .toList
+            .sortBy(_.scheduledTime)
+          if (departures.nonEmpty) Some(departures)
+          else {
+            None
           }
-        case Left(error) =>
-          println(s"Error loading departures: ${error.getMessage}")
-          None
+        case Left(error) => None
       }
     }
+  }
 
   private def convertToStation(station: RRStation): Station =
     Station(name = station.name, id = station.extId)
 
   private def convertToDeparture(departure: RRDeparture): Departure =
-    Departure(
-      line = departure.ProductAtStop.line,
-      destination = departure.direction,
-      transportType = convertRRTransportType(departure.ProductAtStop.catOut),
-      scheduledTime = LocalDateTime.parse(departure.time, dateTimeFormatter),
-      expectedTime = LocalDateTime.parse(departure.time, dateTimeFormatter),
-      waitingTime =
-        s"${Duration.between(LocalDateTime.now(), LocalDateTime.parse(departure.time, dateTimeFormatter))} min"
-    )
+    Try {
+      val stockholmZone = ZoneId.of("UTC+2")
+      val formatter     = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+      val now           = ZonedDateTime.now(stockholmZone)
+      val departureDateTime =
+        LocalDateTime.parse(s"${departure.date}T${departure.time}", formatter)
+      val departureLDT = ZonedDateTime.of(departureDateTime, stockholmZone)
+
+      // Calculate waiting time
+      val waitingTimeMinutes = ChronoUnit.MINUTES.between(now, departureLDT)
+      val waitingTime = if (waitingTimeMinutes < 0) {
+        "Departed"
+      } else if ((waitingTimeMinutes / 60) >= 1) {
+        f"${departureDateTime.getHour}%02d:${departureDateTime.getMinute}%02d"
+      } else {
+        s"${waitingTimeMinutes} min"
+      }
+
+      Departure(
+        line = departure.ProductAtStop.line,
+        destination = departure.direction.replaceFirst("""\s*\([^)]*\)""", ""),
+        transportType = convertRRTransportType(departure.ProductAtStop.catOut),
+        scheduledTime = departureDateTime,
+        expectedTime = departureDateTime,
+        waitingTime = waitingTime
+      )
+    } match {
+      case Success(dep) => dep
+      case Failure(exception) =>
+        println(s"Error in convertToDeparture: ${exception.getMessage}")
+        exception.printStackTrace()
+        throw exception
+    }
