@@ -7,7 +7,7 @@ import scala.concurrent.duration.*
 
 class TransportFacade() {
   private val Mode: TransportType = TransportType.Bus
-  private val SLApi               = new SLApi()
+  val SLApi                       = new SLApi()
   val RRApi                       = new ResRobotApi()
 
   def loadStations(): IO[Either[String, List[Station]]] =

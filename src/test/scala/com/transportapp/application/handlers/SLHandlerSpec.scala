@@ -28,12 +28,13 @@ object SLHandlerSpec extends TestSuite {
                 TransportType.Bus,
                 fixedTimestamp,
                 fixedTimestamp,
-                "10 min"
+                "10 min",
+                "A"
               )
             )
           )
       ): SLHandler = {
-        val mockFacade = new TransportFacade(SLApi = null) {
+        val mockFacade = new TransportFacade() {
           override def loadSLStations: IO[Either[String, List[Station]]] =
             IO.pure(stations)
           override def getSLDepartures(
@@ -77,7 +78,8 @@ object SLHandlerSpec extends TestSuite {
                   TransportType.Bus,
                   fixedTimestamp,
                   fixedTimestamp,
-                  "10 min"
+                  "10 min",
+                  "A"
                 )
               )
             )

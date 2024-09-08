@@ -10,14 +10,14 @@ class ModelSpec extends AnyFunSpec with Matchers {
     var model          = Model.initial.updateStation(initialStation)
 
     it("should have default values in the initial model") {
-      model.slStations shouldBe Left("No data")
-      model.slDepartures shouldBe None
+      model.Stations shouldBe Left("No data")
+      model.Departures shouldBe None
       model.isTestMode shouldBe false
       model.selectedStation.id shouldBe initialStation.id
       model.output shouldBe empty
       model.searchVisible shouldBe false
-      model.slFilteredStations shouldBe None
-      model.slTransportTypeFilter shouldBe TransportType.All
+      model.FilteredStations shouldBe None
+      model.TransportTypeFilter shouldBe TransportType.All
     }
 
     it("should update the selected station") {
@@ -30,7 +30,7 @@ class ModelSpec extends AnyFunSpec with Matchers {
     }
 
     it("should update the list of stations") {
-      model = model.copy(slStations =
+      model = model.copy(Stations =
         Right(
           List(Station("1", "Central Station"), Station("2", "North Station"))
         )
@@ -38,17 +38,19 @@ class ModelSpec extends AnyFunSpec with Matchers {
       val stations =
         List(Station("1", "East Station"), Station("2", "West Station"))
       val updatedModel = model.updateStations(Right(stations))
-      updatedModel.slStations shouldBe Right(stations)
+      updatedModel.Stations shouldBe Right(stations)
     }
 
     it("should update the list of departures") {
       val now = LocalDateTime.of(2023, 1, 1, 12, 0)
+      val now1 = LocalDateTime.of(2023, 1, 1, 12, 5)
       val departures = List(
-        Departure("101", "Line 1", TransportType.Bus, now, now, "5 min"),
-        Departure("102", "Line 2", TransportType.Metro, now, now, "10 min")
+        Departure("101", "Line 1", TransportType.Bus, now, now, "5 min", "A"),
+        Departure("102", "Line 1", TransportType.Metro, now1, now1, "10 min", "B")
       )
-      val updatedModel = model.updateDepartures(departures)
-      updatedModel.slDepartures shouldBe Some(departures)
+      val updatedModel =
+        model.copy(Departures = None).updateDepartures(departures)
+      updatedModel.Departures shouldBe Some(departures)
     }
 
     it("should update the output string") {
@@ -76,7 +78,7 @@ class ModelSpec extends AnyFunSpec with Matchers {
         List(Station("1", "Central Station"), Station("2", "North Station"))
       val modelWithStations = model.updateStations(Right(stations))
       val updatedModel = modelWithStations.updateFilteredStations("Central")
-      updatedModel.slFilteredStations shouldBe Some(
+      updatedModel.FilteredStations shouldBe Some(
         List(Station("1", "Central Station"))
       )
       updatedModel.searchVisible shouldBe true
@@ -84,7 +86,7 @@ class ModelSpec extends AnyFunSpec with Matchers {
 
     it("should update the transport type filter") {
       val updatedModel = model.updateTransportTypeFilter(TransportType.Bus)
-      updatedModel.slTransportTypeFilter shouldBe TransportType.Bus
+      updatedModel.TransportTypeFilter shouldBe TransportType.Bus
     }
   }
 }
