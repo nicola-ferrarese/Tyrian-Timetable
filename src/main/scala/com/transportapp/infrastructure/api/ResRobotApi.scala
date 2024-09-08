@@ -10,7 +10,6 @@ import io.circe.generic.auto.*
 import scala.util.{Try, Success, Failure}
 import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.time.temporal.ChronoUnit
-
 import java.time.format.DateTimeFormatter
 
 class ResRobotApi extends TransportApi:
@@ -19,9 +18,10 @@ class ResRobotApi extends TransportApi:
     (59.329444, 18.068611),
     (59.612565, 17.865964)
   )
-  private val baseUrl  = "https://api.resrobot.se/v2.1"
-  private val accessId = "31fc7aac-2151-4992-8857-db30d1927d9c"
-
+  private val baseUrl = "https://api.resrobot.se/v2.1"
+  private val accessId = Option(System.getenv("RES_ROBOT_TOKEN")).getOrElse {
+    "api_key"
+  }
   override def loadStations(): IO[Either[String, List[Station]]] = {
     val paramMap = Map(
       "format"   -> "json",
