@@ -188,7 +188,7 @@ button:hover {
 
 
 .github-footer {
-    position: fixed;
+    position: sticky;
     bottom: 0;
     left: 0;
     right: 0;
@@ -240,6 +240,16 @@ button:hover {
 .github-button svg {
     width: 24px;
     height: 24px;
+}
+
+@media (max-width: 1000px) {
+    .github-button svg {
+        width: 40px;
+        height: 40px;
+    }
+    .github-footer {
+        height: 60px;
+    }
 }
 .github-button svg {
     margin-right: 5px;
