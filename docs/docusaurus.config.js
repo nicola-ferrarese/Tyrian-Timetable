@@ -80,7 +80,7 @@ const config = {
             label: 'Tutorial',
           },*/
           {
-            href: 'https://github.com/facebook/docusaurus',
+            href: 'https://github.com/nicola-ferrarese/Tyrian-Timetable',
             label: 'GitHub',
             position: 'right',
           },
