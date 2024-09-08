@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.5.2">
 <title data-rh="true">Design Architetturale | My Site</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/docs/tutorial-basics/architectural_design"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Design Architetturale | My Site"><meta data-rh="true" name="description" content="Architettura Complessiva"><meta data-rh="true" property="og:description" content="Architettura Complessiva"><link data-rh="true" rel="icon" href="/Tyrian-Timetable/docs/img/tyrian.svg"><link data-rh="true" rel="canonical" href="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/docs/tutorial-basics/architectural_design"><link data-rh="true" rel="alternate" href="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/docs/tutorial-basics/architectural_design" hreflang="en"><link data-rh="true" rel="alternate" href="https://your-docusaurus-site.example.com/Tyrian-Timetable/docs/docs/tutorial-basics/architectural_design" hreflang="x-default"><link rel="stylesheet" href="/Tyrian-Timetable/docs/assets/css/styles.1e877a6b.css">
-<script src="/Tyrian-Timetable/docs/assets/js/runtime~main.f2cd25c7.js" defer="defer"></script>
+<script src="/Tyrian-Timetable/docs/assets/js/runtime~main.a8161141.js" defer="defer"></script>
 <script src="/Tyrian-Timetable/docs/assets/js/main.55274097.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -23,7 +23,7 @@
 <li>
 <p><em>Application Layer</em>: Gestisce la logica di business e i casi d&#x27;uso.</p>
 <ul>
-<li>Componenti principali: SLHandler, Model</li>
+<li>Componenti principali: ApiHandler, Model</li>
 <li>Responsabilità: Processare i comandi, gestire gli eventi, aggiornare lo stato dell&#x27;applicazione</li>
 </ul>
 </li>
@@ -37,11 +37,23 @@
 <li>
 <p><em>Infrastructure Layer</em>: Si occupa dei servizi esterni e delle fonti di dati.</p>
 <ul>
-<li>Componenti principali: SLApi, TransportFacade</li>
+<li>Componenti principali: SLApi (Stockholm Lokaltrafik) , RRApi (ResRobot), TransportFacade</li>
 <li>Responsabilità: Comunicazione con API esterne, gestione dei dati persistenti</li>
 </ul>
 </li>
 </ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="interazioni-tra-i-layer">Interazioni tra i Layer<a href="#interazioni-tra-i-layer" class="hash-link" aria-label="Direct link to Interazioni tra i Layer" title="Direct link to Interazioni tra i Layer">​</a></h2>
+<p>Le interazioni tra i layer seguono un flusso specifico:</p>
+<ol>
+<li>Il Presentation Layer cattura le azioni dell&#x27;utente e le traduce in comandi.</li>
+<li>I comandi vengono inviati all&#x27;Application Layer, che li processa utilizzando l&#x27;SLHandler.</li>
+<li>L&#x27;SLHandler interagisce con il Domain Layer per eseguire la logica di business e con l&#x27;Infrastructure Layer per accedere ai dati esterni.</li>
+<li>I risultati vengono restituiti all&#x27;Application Layer sotto forma di eventi.</li>
+<li>L&#x27;Application Layer aggiorna il Model in base agli eventi.</li>
+<li>Il Presentation Layer viene notificato dei cambiamenti e aggiorna la vista di conseguenza.</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="diagramma-delle-interazioni">Diagramma delle Interazioni<a href="#diagramma-delle-interazioni" class="hash-link" aria-label="Direct link to Diagramma delle Interazioni" title="Direct link to Diagramma delle Interazioni">​</a></h3>
+<!-- -->
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="diagramma-architetturale-di-alto-livello">Diagramma Architetturale di Alto Livello<a href="#diagramma-architetturale-di-alto-livello" class="hash-link" aria-label="Direct link to Diagramma Architetturale di Alto Livello" title="Direct link to Diagramma Architetturale di Alto Livello">​</a></h2>
 <!-- -->
 <p>Questo diagramma mostra le principali componenti dell&#x27;applicazione e le loro relazioni.</p>
@@ -53,32 +65,44 @@ Implementato attraverso Tyrian, questo pattern separa la logica di stato (Model)
 </li>
 <li>
 <p><strong><em>Command-Query Responsibility Segregation (CQRS)</em></strong>
-Separazione tra comandi (SLCommand) che modificano lo stato e query che leggono lo stato, implementato attraverso la struttura degli eventi e dei comandi.</p>
+Separazione tra comandi (ApiCommands) che modificano lo stato e query che leggono lo stato, implementato attraverso la struttura degli eventi e dei comandi.</p>
 </li>
 <li>
 <p><strong><em>Event Sourcing</em></strong>
-Utilizzo di eventi (SLEvent e TyEvent) per rappresentare cambiamenti nello stato dell&#x27;applicazione.</p>
-</li>
-<li>
-<p><strong><em>Repository Pattern</em></strong>
-Implementato attraverso SLApi, che astrae l&#x27;accesso ai dati esterni.</p>
+Utilizzo di eventi (ApiEvent e TyEvents) per rappresentare cambiamenti nello stato dell&#x27;applicazione, in mondo distinto
+tra eventi relativi ai dati esterni e eventi relativi all&#x27;interfaccia utente e al Framework.</p>
 </li>
 <li>
 <p><strong><em>Facade Pattern</em></strong>
 TransportFacade agisce come una facciata, semplificando l&#x27;interfaccia per l&#x27;accesso ai servizi di trasporto.</p>
+</li>
+<li>
+<p><strong><em>Repository Pattern</em></strong>
+SLApi e RRApi fungono da repository per l&#x27;accesso ai dati esterni, astratti attraverso l&#x27;interfaccia TransportFacade.</p>
 </li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="componenti-principali-del-sistema">Componenti Principali del Sistema<a href="#componenti-principali-del-sistema" class="hash-link" aria-label="Direct link to Componenti Principali del Sistema" title="Direct link to Componenti Principali del Sistema">​</a></h2>
 <ul>
 <li><strong>TransportApp</strong>: Componente principale che gestisce il ciclo di vita dell&#x27;applicazione.</li>
 <li><strong>Model</strong>: Rappresenta lo stato dell&#x27;applicazione.</li>
-<li><strong>SLHandler</strong>: Gestisce i comandi SL e produce eventi corrispondenti.</li>
+<li><strong>ApiHandler</strong>: Gestisce i comandi SL e produce eventi corrispondenti.</li>
 <li><strong>TransportFacade</strong>: Astrae l&#x27;accesso ai servizi di trasporto.</li>
 <li><strong>SLApi</strong>: Interfaccia per l&#x27;accesso ai dati esterni del servizio SL.</li>
+<li><strong>RRApi</strong>: Interfaccia per l&#x27;accesso ai dati esterni del servizio ResRobot.</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="interazioni-tra-componenti">Interazioni tra Componenti<a href="#interazioni-tra-componenti" class="hash-link" aria-label="Direct link to Interazioni tra Componenti" title="Direct link to Interazioni tra Componenti">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="interazioni-tra-i-layer-1">Interazioni tra i Layer<a href="#interazioni-tra-i-layer-1" class="hash-link" aria-label="Direct link to Interazioni tra i Layer" title="Direct link to Interazioni tra i Layer">​</a></h2>
+<p>Le interazioni tra i layer seguono un flusso specifico:</p>
+<ol>
+<li>Il Presentation Layer cattura le azioni dell&#x27;utente e le traduce in comandi.</li>
+<li>I comandi vengono inviati all&#x27;Application Layer, che li processa utilizzando l&#x27;SLHandler.</li>
+<li>L&#x27;SLHandler interagisce con il Domain Layer per eseguire la logica di business e con l&#x27;Infrastructure Layer per accedere ai dati esterni.</li>
+<li>I risultati vengono restituiti all&#x27;Application Layer sotto forma di eventi.</li>
+<li>L&#x27;Application Layer aggiorna il Model in base agli eventi.</li>
+<li>Il Presentation Layer viene notificato dei cambiamenti e aggiorna la vista di conseguenza.</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="diagramma-delle-interazioni-1">Diagramma delle Interazioni<a href="#diagramma-delle-interazioni-1" class="hash-link" aria-label="Direct link to Diagramma delle Interazioni" title="Direct link to Diagramma delle Interazioni">​</a></h3>
 <!-- -->
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="gestione-degli-eventi-e-dei-comandi">Gestione degli Eventi e dei Comandi<a href="#gestione-degli-eventi-e-dei-comandi" class="hash-link" aria-label="Direct link to Gestione degli Eventi e dei Comandi" title="Direct link to Gestione degli Eventi e dei Comandi">​</a></h2>
-</div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/Tyrian-Timetable/docs/docs/tutorial-basics/requirements"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Requirements</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/Tyrian-Timetable/docs/docs/tutorial-basics/detailed_design"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Detailed Design</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#architettura-complessiva" class="table-of-contents__link toc-highlight">Architettura Complessiva</a><ul><li><a href="#layer-dellapplicazione" class="table-of-contents__link toc-highlight">Layer dell&#39;Applicazione</a></li></ul></li><li><a href="#diagramma-architetturale-di-alto-livello" class="table-of-contents__link toc-highlight">Diagramma Architetturale di Alto Livello</a></li><li><a href="#pattern-architetturali-utilizzati" class="table-of-contents__link toc-highlight">Pattern Architetturali Utilizzati</a></li><li><a href="#componenti-principali-del-sistema" class="table-of-contents__link toc-highlight">Componenti Principali del Sistema</a></li><li><a href="#interazioni-tra-componenti" class="table-of-contents__link toc-highlight">Interazioni tra Componenti</a></li><li><a href="#gestione-degli-eventi-e-dei-comandi" class="table-of-contents__link toc-highlight">Gestione degli Eventi e dei Comandi</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">PPS 2022 - Transport Tracker App</div></div></div></footer></div>
+</div></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/Tyrian-Timetable/docs/docs/tutorial-basics/requirements"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Requirements</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/Tyrian-Timetable/docs/docs/tutorial-basics/detailed_design"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Detailed Design</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#architettura-complessiva" class="table-of-contents__link toc-highlight">Architettura Complessiva</a><ul><li><a href="#layer-dellapplicazione" class="table-of-contents__link toc-highlight">Layer dell&#39;Applicazione</a></li></ul></li><li><a href="#interazioni-tra-i-layer" class="table-of-contents__link toc-highlight">Interazioni tra i Layer</a><ul><li><a href="#diagramma-delle-interazioni" class="table-of-contents__link toc-highlight">Diagramma delle Interazioni</a></li></ul></li><li><a href="#diagramma-architetturale-di-alto-livello" class="table-of-contents__link toc-highlight">Diagramma Architetturale di Alto Livello</a></li><li><a href="#pattern-architetturali-utilizzati" class="table-of-contents__link toc-highlight">Pattern Architetturali Utilizzati</a></li><li><a href="#componenti-principali-del-sistema" class="table-of-contents__link toc-highlight">Componenti Principali del Sistema</a></li><li><a href="#interazioni-tra-i-layer-1" class="table-of-contents__link toc-highlight">Interazioni tra i Layer</a><ul><li><a href="#diagramma-delle-interazioni-1" class="table-of-contents__link toc-highlight">Diagramma delle Interazioni</a></li></ul></li><li><a href="#gestione-degli-eventi-e-dei-comandi" class="table-of-contents__link toc-highlight">Gestione degli Eventi e dei Comandi</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">PPS 2022 - Transport Tracker App</div></div></div></footer></div>
 </body>
 </html>
