@@ -15,13 +15,15 @@ case class RRStation(
 case class RRDeparture(
     direction: String,
     time: String,
+    date: String,
     ProductAtStop: RRProduct
 )
 
 case class RRProduct(
     line: String,
     displayNumber: String,
-    catOut: String
+    catOut: String,
+    operator: String
 )
 
 enum RRTransportType:
@@ -38,6 +40,7 @@ def convertRRTransportType(mode: String): TransportType =
     case "SLT" => TransportType.Tram
     case "TLT" => TransportType.Taxi
     case "ULT" => TransportType.Metro
+    case _     => TransportType.Ship
   }
 
 case class RRDepartureResponse(Departure: List[RRDeparture])

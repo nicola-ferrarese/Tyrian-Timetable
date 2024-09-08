@@ -7,5 +7,5 @@ case class Departure(
     transportType: TransportType,
     scheduledTime: LocalDateTime,
     expectedTime: LocalDateTime,
-    waitingTime: String
+    waitingTime: String,
 )

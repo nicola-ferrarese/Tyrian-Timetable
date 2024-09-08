@@ -24,14 +24,28 @@ object Model:
   extension (model: Model)
     def updateStation(station: Station): Model =
       val CheckedStation = getStation(station.id)
-      model.copy(selectedStation = CheckedStation, searchVisible = false)
+      model.copy(
+        selectedStation = CheckedStation,
+        searchVisible = false,
+        slDepartures = None
+      )
 
     def updateStations(stations: Either[String, List[Station]]): Model =
       model.updateOutput(stations.toString).copy(slStations = stations)
 
-    def updateDepartures(departures: List[Departure]): Model =
-      model
-        .copy(slDepartures = Some(departures))
+    def updateDepartures(newDepartures: List[Departure]): Model = {
+      val allDepartures =
+        model.slDepartures.getOrElse(List.empty) ++ newDepartures
+      println(s"allDepartures: $newDepartures")
+      val dedupedDepartures = allDepartures
+        .groupBy(d => (d.line, d.destination, d.waitingTime, d.scheduledTime))
+        .values
+        .map(_.head)
+        .toList
+        .sortBy(_.scheduledTime)
+
+      model.copy(slDepartures = Some(dedupedDepartures))
+    }
 
     def updateOutput(output: String): Model =
       model.copy(output = output)
