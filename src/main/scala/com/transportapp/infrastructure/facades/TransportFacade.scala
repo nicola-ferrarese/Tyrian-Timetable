@@ -1,13 +1,38 @@
 package com.transportapp.infrastructure.facades
 import com.transportapp.domain.models.{Departure, Station, TransportType}
 import cats.effect.IO
-import com.transportapp.infrastructure.api.*
-
+import com.transportapp.infrastructure.api.{ResRobotApi, SLApi}
+import cats.implicits.*
 import scala.concurrent.duration.*
 
-class TransportFacade(SLApi: SLApi) {
+class TransportFacade() {
   private val Mode: TransportType = TransportType.Bus
+  private val SLApi               = new SLApi()
   val RRApi                       = new ResRobotApi()
+
+  def loadStations(): IO[Either[String, List[Station]]] =
+    (loadSLStations, loadResRobotStations).parMapN { (slResult, rrResult) =>
+      for {
+        slStations <- slResult
+        rrStations <- rrResult
+      } yield slStations ++ rrStations
+    }
+
+  def getDepartures(
+      stationId: String,
+      filter: TransportType
+  ): IO[Option[List[Departure]]] =
+    (
+      getSLDepartures(stationId, filter),
+      getResRobotDepartures(stationId, filter)
+    ).parMapN {
+      case (Some(slDepartures), Some(rrDepartures)) =>
+        Some(slDepartures ++ rrDepartures)
+      case (Some(slDepartures), None) => Some(slDepartures)
+      case (None, Some(rrDepartures)) => Some(rrDepartures)
+      case _                          => None
+    }
+
   def loadSLStations: IO[Either[String, List[Station]]] =
     if (Mode == TransportType.Bus) {
       def retryLoadStations(
