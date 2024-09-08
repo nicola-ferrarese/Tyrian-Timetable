@@ -5,23 +5,23 @@ import tyrian.*
 import tyrian.Html.*
 import cats.effect.IO
 import com.transportapp.infrastructure.facades.TransportFacade
-import com.transportapp.infrastructure.api.SLApi
 import com.transportapp.domain.models.{Departure, Station}
 import com.transportapp.application.commands.*
+import com.transportapp.application.commands.ApiCommand.LoadStations
 import com.transportapp.application.handlers.*
 import com.transportapp.domain.events.*
-import scala.concurrent.duration.DurationInt
 
+import scala.concurrent.duration.DurationInt
 import scala.scalajs.js
 import org.scalajs.dom
 import com.transportapp.domain.models.TransportType
 
 @JSExportTopLevel("TyrianApp")
 object TransportApp extends TyrianIOApp[Msg, Model]:
-  private val slApi                  = SLApi()
-  private val transportFacade        = TransportFacade(slApi)
+  private val transportFacade        = TransportFacade()
   private val slCommandHandler       = SLHandler(transportFacade)
   private val resRobotCommandHandler = ResRobotHandler(transportFacade)
+  private val apiCommandHandler      = ApiHandler(transportFacade)
 
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
     val initialStation = Station("1183", "Professorsslingan")
@@ -38,8 +38,8 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
           Msg.HandleEvent(TyEvent.stationSelected(initialStation))
     })
     val loadStationsCmd = Cmd.Run(
-      slCommandHandler
-        .handle(SLCommand.LoadStations)
+      apiCommandHandler
+        .handle(ApiCommand.LoadStations)
         .map(Msg.HandleEvent.apply(_))
     )
     (model, Cmd.Batch(loadStationsCmd, initialStationCmd))
@@ -53,6 +53,14 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
 
   private def handleCommand(cmd: Command, model: Model): (Model, Cmd[IO, Msg]) =
     cmd match
+      case apiCommand: ApiCommand =>
+        (
+          model,
+          Cmd.Run(
+            apiCommandHandler.handle(apiCommand).map(Msg.HandleEvent.apply)
+          )
+        )
+
       case slCmd: SLCommand =>
         (
           model,
@@ -75,6 +83,20 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
       model: Model
   ): (Model, Cmd[IO, Msg]) =
     val (updatedModel, cmd) = event match
+      case ApiEvent.StationsLoaded(stations) =>
+        val updatedModel = model.updateStations(stations)
+        val setStationCmd = Cmd.Run(
+          IO.pure(
+            Msg.HandleEvent(
+              TyEvent.stationSelected(updatedModel.selectedStation)
+            )
+          )
+        )
+        (updatedModel, setStationCmd)
+
+      case ApiEvent.DeparturesLoaded(departures) =>
+        (model.updateDepartures(departures), Cmd.None)
+
       case SLEvent.StationsLoaded(stations) =>
         val updatedModel = model.updateStations(stations)
         val setStationCmd = Cmd.Run(
@@ -94,7 +116,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         val getDeparturesCmd = Cmd.Run(
           IO.pure(
             Msg.ExecuteCommand(
-              SLCommand.GetDepartures(station.id, model.slTransportTypeFilter)
+              ApiCommand.GetDepartures(station.id, model.slTransportTypeFilter)
             )
           )
         )
@@ -123,7 +145,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         val getDeparturesCmd = Cmd.Run(
           IO.pure(
             Msg.ExecuteCommand(
-              SLCommand.GetDepartures(
+              ApiCommand.GetDepartures(
                 model.selectedStation.id,
                 model.slTransportTypeFilter
               )
@@ -137,7 +159,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
         val getDeparturesCmd = Cmd.Run(
           IO.pure(
             Msg.ExecuteCommand(
-              SLCommand.GetDepartures(model.selectedStation.id, filter)
+              ApiCommand.GetDepartures(model.selectedStation.id, filter)
             )
           )
         )
