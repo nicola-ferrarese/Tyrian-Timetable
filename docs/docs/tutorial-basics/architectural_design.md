@@ -93,46 +93,7 @@ tra eventi relativi ai dati esterni e eventi relativi all'interfaccia utente e a
 
 - **_Repository Pattern_**
 SLApi e RRApi fungono da repository per l'accesso ai dati esterni, astratti attraverso l'interfaccia TransportFacade.
-## Componenti Principali del Sistema
 
-- **TransportApp**: Componente principale che gestisce il ciclo di vita dell'applicazione.
-- **Model**: Rappresenta lo stato dell'applicazione.
-- **ApiHandler**: Gestisce i comandi SL e produce eventi corrispondenti.
-- **TransportFacade**: Astrae l'accesso ai servizi di trasporto.
-- **SLApi**: Interfaccia per l'accesso ai dati esterni del servizio SL.
-- **RRApi**: Interfaccia per l'accesso ai dati esterni del servizio ResRobot.
-
-
-## Interazioni tra i Layer
-
-Le interazioni tra i layer seguono un flusso specifico:
-
-1. Il Presentation Layer cattura le azioni dell'utente e le traduce in comandi.
-2. I comandi vengono inviati all'Application Layer, che li processa utilizzando l'SLHandler.
-3. L'SLHandler interagisce con il Domain Layer per eseguire la logica di business e con l'Infrastructure Layer per accedere ai dati esterni.
-4. I risultati vengono restituiti all'Application Layer sotto forma di eventi.
-5. L'Application Layer aggiorna il Model in base agli eventi.
-6. Il Presentation Layer viene notificato dei cambiamenti e aggiorna la vista di conseguenza.
-
-### Diagramma delle Interazioni
-
-```mermaid
-sequenceDiagram
-    participant PL as Presentation Layer
-    participant AL as Application Layer
-    participant DL as Domain Layer
-    participant IL as Infrastructure Layer
-    
-    PL->>AL: Invia comando (es. LoadStations)
-    AL->>IL: Richiede dati
-    IL->>IL: Chiama API esterne
-    IL-->>AL: Restituisce dati grezzi
-    AL->>DL: Converte in entità di dominio
-    DL-->>AL: Restituisce entità
-    AL->>AL: Genera evento (es. StationsLoaded)
-    AL-->>PL: Notifica cambiamento di stato
-    PL->>PL: Aggiorna vista
-```
 
 ## Gestione degli Eventi e dei Comandi
 

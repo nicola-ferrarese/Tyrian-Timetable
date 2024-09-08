@@ -7,13 +7,16 @@ sidebar_label: Detailed Design
 
 Il design dettagliato dell'applicazione Stockholm Transit Tracker si basa su quattro layer principali, seguendo i principi della Clean Architecture. Ogni layer ha responsabilità specifiche e interagisce con gli altri in modo definito.
 
-I componenti principali sono:
-- **Presentation Layer**: gestisce l'interfaccia utente e le interazioni.
-- **Application Layer**: gestisce la logica di business e i casi d'uso.
-- **Domain Layer**: contiene la logica di business core e le entità del dominio.
-- **Infrastructure Layer**: si occupa dei servizi esterni e delle fonti di dati.
+### Componenti Principali del Sistema
 
-## Interazioni tra Componenti
+- **TransportApp**: Componente principale che gestisce il ciclo di vita dell'applicazione.
+- **Model**: Rappresenta lo stato dell'applicazione.
+- **ApiHandler**: Gestisce i comandi SL e produce eventi corrispondenti.
+- **TransportFacade**: Astrae l'accesso ai servizi di trasporto.
+- **SLApi**: Interfaccia per l'accesso ai dati esterni del servizio SL.
+- **RRApi**: Interfaccia per l'accesso ai dati esterni del servizio ResRobot.
+
+### Interazioni tra Componenti
 
 ```mermaid
 sequenceDiagram
@@ -35,7 +38,7 @@ sequenceDiagram
     TransportApp->>TransportApp: Aggiorna vista
 ```
 
-## 1. Presentation Layer
+## Presentation Layer
 
 Il Presentation Layer è responsabile dell'interfaccia utente e delle interazioni con l'utente.
 
@@ -123,16 +126,17 @@ classDiagram
 Il Domain Layer contiene la logica di business core e le entità del dominio.
 
 ### Componenti Principali
-- `Station`: Rappresenta una stazione di trasporto.
-- `Departure`: Rappresenta una partenza.
-- `TransportType`: Enumeration dei tipi di trasporto.
+- `models`: modello di dominio
+  - `Station`: Rappresenta una stazione di trasporto.
+  - `Departure`: Rappresenta una partenza.
+  - `TransportType`: Enumerazione per distinguere tra diversi tipi di trasporto.
+- `Events`: Eventi relativi al dominio.
+  - Specifici per ogni diversa responsabilità del dominio (ApiEvent, TyrianEvent).
 
 ### Responsabilità
 - Definire le strutture dati fondamentali del dominio
 - Implementare la logica di business core
 - Fornire un'interfaccia per le operazioni di dominio
-
-### Diagramma
 
 ```mermaid
 classDiagram
@@ -151,16 +155,27 @@ classDiagram
     }
     class TransportType {
         <<enumeration>>
-        All
-        Bus
-        Train
-        Ferry
-        Tram
-        Metro
-        Taxi
-        Ship
+        +Bus
+        +Metro
+        +Train
+        +Tram
     }
-    Departure --> TransportType : uses
+    class ApiEvent {
+        <<enumeration>>
+        +StationsLoaded(Either[String, List[Station]])
+        +DeparturesLoaded(List[Departure])
+    }
+    class TyEvent {
+        <<enumeration>>
+         +stationSelected(station: Station)
+         +inputUpdated(input: String)
+         +TransportFilterUpdated(filter: TransportType)
+         +getStationName(stationId: String)
+         +UpdateDepartures
+         +NoOp
+    }
+    ApiEvent --> AppEvent : extends
+    TyEvent --> AppEvent : extends
 ```
 
 ## 4. Infrastructure Layer
@@ -169,6 +184,7 @@ L'Infrastructure Layer si occupa delle interazioni con servizi esterni e della g
 
 ### Componenti Principali
 - `SLApi`: Interfaccia per la comunicazione con l'API Stockholm Local.
+- `RRApi`: Interfaccia per la comunicazione con l'API ResRobot.
 - `TransportFacade`: Astrae l'accesso ai servizi di trasporto.
 
 ### Responsabilità

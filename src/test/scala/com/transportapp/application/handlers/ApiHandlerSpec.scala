@@ -2,7 +2,7 @@ import utest._
 import cats.effect.IO
 import com.transportapp.infrastructure.facades.TransportFacade
 import com.transportapp.application.commands.ApiCommand
-import com.transportapp.domain.events.SLEvent
+import com.transportapp.domain.events.ApiEvent
 import com.transportapp.domain.models.{Departure, Station, TransportType}
 import com.transportapp.application.handlers.ApiHandler
 import cats.effect.unsafe.implicits.global
@@ -109,7 +109,7 @@ object ApiHandlerSpec extends TestSuite {
         )
         eventFuture.map { event =>
           assert(
-            event == SLEvent.StationsLoaded(Left("Failed to load stations"))
+            event == ApiEvent.StationsLoaded(Left("Failed to load stations"))
           )
         }
       }
