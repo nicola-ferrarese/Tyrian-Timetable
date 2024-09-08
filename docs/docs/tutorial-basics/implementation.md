@@ -21,19 +21,50 @@ case class Model(
   slStations: Either[String, List[Station]],
   slDepartures: Option[List[Departure]],
   selectedStation: Station,
-  // ... altri campi
+  // ... 
 )
 
 def view(model: Model): Html[Msg] =
   div(cls := "TyrianContent")(
     div(cls := "header-button-container")(
-      // ... contenuto della vista
+      // ...
     ),
     div()(
-      if model.isTestMode then testModeView(model) else normalModeView(model)
+      model.slStations match {
+        case Right(stations) => stationList(stations)
+        case Left(error) => div(cls := "error-message")(error)
+      }
     )
   )
 ```
+### Aggiornamenti del Modello in Tyrian
+Tyrian gestisce gli aggiornamenti del modello in modo puro e immutabile. La funzione update prende il modello corrente e un messaggio, e restituisce una tupla contenente il modello aggiornato e un comando da eseguire:
+
+```scala
+def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
+case Msg.ExecuteCommand(cmd) => handleCommand(cmd, model)
+case Msg.HandleEvent(event) => handleEvent(event, model)
+// ... 
+}
+```
+Questo pattern assicura che tutti i cambiamenti di stato siano espliciti e tracciabili. La classe Model tipicamente include metodi helper per aggiornare parti specifiche dello stato:
+
+```scala
+case class Model(
+slStations: Either[String, List[Station]],
+slDepartures: Option[List[Departure]],
+// ... 
+) {
+def updateStations(stations: Either[String, List[Station]]): Model =
+this.copy(slStations = stations)
+
+def updateDepartures(departures: List[Departure]): Model =
+this.copy(slDepartures = Some(departures))
+// ... 
+}
+```
+Questi metodi restituiscono sempre una nuova istanza di Model usando copy, mantenendo l'immutabilità. Questo approccio facilita il ragionamento sui cambiamenti di stato e aiuta a prevenire effetti collaterali.
+
 
 ## Gestione di Handler, Comandi ed Eventi
 
@@ -41,17 +72,19 @@ Il progetto utilizza un sistema di comandi ed eventi per gestire la logica dell'
 
 ### Handler
 
-L'`SLHandler` è responsabile di processare i comandi e produrre gli eventi corrispondenti:
+L'`ApiHandler` è responsabile di processare i comandi e produrre gli eventi corrispondenti:
 
 ```scala
-class SLHandler(transportFacade: TransportFacade){
-  def handle(command: SLCommand): IO[SLEvent] = command match {
-    case SLCommand.LoadStations =>
-      transportFacade.loadSLStations.map(SLEvent.StationsLoaded(_))
-    case SLCommand.GetDepartures(stationId, filter) =>
-      transportFacade.getSLDepartures(stationId, filter).map {
-        case Some(departures) => SLEvent.DeparturesLoaded(departures)
-        case None => SLEvent.DeparturesLoaded(List.empty)
+class ApiHandler(transportFacade: TransportFacade) {
+  def handle(command: ApiCommand): IO[ApiEvent] = command match {
+    case ApiCommand.LoadStations =>
+      transportFacade.loadStations().map(ApiEvent.StationsLoaded(_))
+    case ApiCommand.GetDepartures(stationId, filter) =>
+      transportFacade.getDepartures(stationId, filter).map {
+        case Some(departures) => ApiEvent.DeparturesLoaded(departures)
+        case None =>
+          println(s"Error loading departures for station $stationId");
+          ApiEvent.DeparturesLoaded(List.empty)
       }
   }
 }
@@ -59,96 +92,118 @@ class SLHandler(transportFacade: TransportFacade){
 
 ### Comandi ed Eventi
 
-I comandi e gli eventi sono definiti come ADTs (Algebraic Data Types):
-
 ```scala
-enum SLCommand extends Command:
-    case LoadStations
-    case GetDepartures(stationId: String, filter: TransportType)
+trait AppEvent
 
-enum SLEvent extends AppEvent:
+enum ApiEvent extends AppEvent {
   case StationsLoaded(stations: Either[String, List[Station]])
   case DeparturesLoaded(departures: List[Departure])
-  case NoOp
+}
+
+enum TyEvent extends AppEvent:
+    case stationSelected(station: Station)
+    case inputUpdated(input: String)
+    case TransportFilterUpdated(filter: TransportType)
+    case getStationName(stationId: String)
+    case UpdateDepartures
+    case NoOp
 ```
-
-## Uso di Cats Effect per le Richieste API
-
-Il progetto utilizza Cats Effect per gestire le operazioni asincrone, in particolare per le richieste API. Questo approccio permette di scrivere codice asincrono in modo composizionale e type-safe.
-
-Esempio di utilizzo di Cats Effect nella `SLApi`:
-
 ```scala
-import cats.effect.IO
-import sttp.client4.*
-import sttp.client4.circe.*
-import io.circe.generic.auto.*
+trait Command
 
-class SLApi extends TransportApi:
-  private val backend = FetchBackend()
-  
-  def loadStations(): IO[Either[String, List[Station]]] = IO.fromFuture {
-    IO {
-      val request = basicRequest.get(uri"$stopsUrl")
-        .response(asJson[List[SLStation]])
-      request.send(backend).map { response =>
-        response.body match {
-          case Right(stations) => Right(stations.map(convertToStation))
-          case Left(error) => Left(error.getMessage)
-        }
-      }
-    }
-  }
+enum ApiCommand extends Command {
+  case LoadStations
+  case GetDepartures(stationId: String, filter: TransportType)
+}
 ```
-
-Questo codice utilizza `IO.fromFuture` per wrappare la chiamata asincrona in un'operazione `IO`, permettendo una gestione sicura e composizionale dell'effetto.
-
-## Meccanismi Avanzati di Scala
-
-### Pattern Matching
+## Pattern Matching
 
 Il pattern matching è ampiamente utilizzato, ad esempio nella gestione dei comandi:
 
 ```scala
-def handleCommand(cmd: Command, model: Model): (Model, Cmd[IO, Msg]) =
+private def handleCommand(cmd: Command, model: Model): (Model, Cmd[IO, Msg]) =
   cmd match
-    case slCmd: SLCommand =>
-      (model, Cmd.Run(slCommandHandler.handle(slCmd).map(Msg.HandleEvent.apply)))
-    case _ =>
-      (model, Cmd.None)
+    case apiCommand: ApiCommand => (  
+        model,Cmd.Run(
+                apiCommandHandler.handle(apiCommand).map(Msg.HandleEvent.apply)))
+    case _ =>  (model, Cmd.None)
 ```
 
-### Higher-Order Functions
+## Operazioni Monadiche e Elaborazione Parallela
+Il progetto fa un uso estensivo di monadi, in particolare IO di Cats Effect, per gestire operazioni asincrone ed effetti collaterali in modo funzionale puro.
 
-Le funzioni di ordine superiore sono utilizzate per la gestione degli aggiornamenti:
+### Uso di Cats Effect per le Richieste API
+
+Il progetto utilizza Cats Effect per gestire le operazioni asincrone, in particolare per le richieste API. Questo approccio permette di scrivere codice asincrono in modo composizionale e type-safe.
+
+per adattarsi alle Api di ResRobot, è stato necessario gestire piu richieste in parallelo, per fare cio si è utilizzato il metodo `traverse` di Cats Effect.
 
 ```scala
-def update(model: Model): Msg => (Model, Cmd[IO, Msg]) = {
-  case Msg.ExecuteCommand(cmd) => handleCommand(cmd, model)
-  case Msg.HandleEvent(event) => handleEvent(event, model)
-  // ... altri casi
+class RRApi extends TransportApi:
+  private val backend = FetchBackend()
+
+override def loadStations(): IO[Either[String, List[Station]]] = {
+  val paramMap = Map(<params-map>) 
+
+  // Build a list of requests for each station coordinate
+  val requests: List[
+    Request[Either[ResponseException[String, Exception], RRStationResponse]]
+  ] =
+    stationCoordinates.map { case (lat, lon) =>
+      val fullParamMap = paramMap ++ Map(
+        "originCoordLat"  -> lat.toString,
+        "originCoordLong" -> lon.toString
+      )
+      basicRequest
+        .get(uri"$baseUrl/location.nearbystops?$fullParamMap")
+        .response(asJson[RRStationResponse])
+    }
+  // Send requests in parallel and collect responses
+  requests.traverse(request => IO.fromFuture(IO(backend.send(request)))).map {
+    responses =>
+      responses.traverse(_.body.left.map(_.getMessage)).map {
+        stationResponses =>
+          stationResponses.flatMap { response =>
+            response.stopLocationOrCoordLocation
+              .map(_.StopLocation)
+              .map(convertToStation)
+          }.distinct
+      }
+  }
 }
 ```
+Questo codice utilizza `IO.fromFuture` per wrappare la chiamata asincrona in un'operazione `IO`, permettendo una gestione sicura e composizionale dell'effetto.
 
-### Impliciti
-
-Gli impliciti sono utilizzati per fornire il backend HTTP e i decoder JSON:
-
-```scala
-implicit val backend = FetchBackend()
-implicit val stationDecoder: Decoder[SLStation] = ...
-```
-
-### Type Classes
-
-Le type class sono utilizzate per definire comportamenti generici, come la conversione da DTO a entità di dominio:
+### Multiple Api e ParMapN
+La classe TransportFacade dimostra l'uso di IO e l'elaborazione parallela per gestire multiple fonti di dati:
 
 ```scala
-trait Converter[A, B] {
-  def convert(a: A): B
+import cats.effect.IO
+import cats.implicits.*
+
+class TransportFacade() {
+  val SLApi = new SLApi()
+  val RRApi  = new ResRobotApi()
+  
+  def loadStations(): IO[Either[String, List[Station]]] =
+    (loadSLStations, loadResRobotStations).parMapN { (slResult, rrResult) =>
+      for {
+        slStations <- slResult
+        rrStations <- rrResult
+      } yield slStations ++ rrStations
+    }
+
+  def getDepartures(stationId: String,filter: TransportType): IO[Option[List[Departure]]] =
+    ( getSLDepartures(stationId, filter),
+      getResRobotDepartures(stationId, filter)
+    ).parMapN {
+      case (Some(slDepartures), Some(rrDepartures)) =>
+        Some(slDepartures ++ rrDepartures)
+      case (Some(slDepartures), None) => Some(slDepartures)
+      case (None, Some(rrDepartures)) => Some(rrDepartures)
+      case _                          => None
+    }
+// ...
 }
-
-implicit val stationConverter: Converter[SLStation, Station] = ...
 ```
-
-#### TODO: Add more details about the implementation, show merging of data sources
+Qui, parMapN viene utilizzato per eseguire chiamate API in parallelo, migliorando le prestazioni. I risultati vengono poi combinati usando for-comprehension e pattern matching.
