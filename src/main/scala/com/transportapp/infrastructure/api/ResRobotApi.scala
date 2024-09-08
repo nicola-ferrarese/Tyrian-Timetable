@@ -20,7 +20,7 @@ class ResRobotApi extends TransportApi:
   )
   private val baseUrl = "https://api.resrobot.se/v2.1"
   private val accessId = Option(System.getenv("RES_ROBOT_TOKEN")).getOrElse {
-    "api_key" // You might want to handle this case differently
+    "api_key"
   }
   override def loadStations(): IO[Either[String, List[Station]]] = {
     val paramMap = Map(
