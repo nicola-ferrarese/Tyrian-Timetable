@@ -15,10 +15,10 @@
 .TyrianContent{
     display: flex;
     flex-direction: column;
+    padding: 0.5vw;
 }
 body {
     margin: 0;
-    padding: 1vw;
     font-family: "DangerOn","Ozone", "sans-serif";
     font-size: 37px;
     color: darkorange;
@@ -54,7 +54,7 @@ tbody tr td:last-child {
 }
 tbody tr {
     border-radius: 10px;
-    overflow: hidden;
+    max-width: max-content;
 }
 
 
@@ -186,9 +186,11 @@ button:hover {
 
 
 
-
+footer{
+    padding: 0
+}
 .github-footer {
-    position: sticky;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
@@ -249,6 +251,18 @@ button:hover {
     }
     .github-footer {
         height: 60px;
+    }
+    .footer-button {
+        padding: 7px 7px;
+    }
+}
+
+@media (max-width: 1400px) {
+    .normalView{
+        width: fit-content;
+    }
+    .TyrianContent{
+        width: fit-content;
     }
 }
 .github-button svg {
