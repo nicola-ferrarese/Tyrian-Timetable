@@ -97,7 +97,7 @@ const config = {
                 to: '/docs/intro',
               },
             ],
-          },*/
+          },
           {
             title: 'Community',
             items: [
@@ -129,7 +129,7 @@ const config = {
             ],
           },*/
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        copyright: `PPS 2022 - Transport Tracker App`,
       },
       prism: {
         theme: prismThemes.github,
