@@ -6,7 +6,6 @@ import cats.implicits.*
 import scala.concurrent.duration.*
 
 class TransportFacade() {
-  private val Mode: TransportType = TransportType.Bus
   val SLApi                       = new SLApi()
   val RRApi                       = new ResRobotApi()
 
@@ -34,30 +33,25 @@ class TransportFacade() {
     }
 
   def loadSLStations: IO[Either[String, List[Station]]] =
-    if (Mode == TransportType.Bus) {
-      def retryLoadStations(
-          retriesLeft: Int
-      ): IO[Either[String, List[Station]]] = {
-        println(s"Attempting to load bus stations. Retries left: $retriesLeft")
-        SLApi.loadStations().flatMap {
-          case Right(stations) =>
-            IO.pure(Right(stations))
-          case _ if retriesLeft > 0 =>
-            IO.sleep(1.second) >> retryLoadStations(retriesLeft - 1)
-          case Left(error) =>
-            IO.pure(
-              Left(
-                s"Failed to load stations after 3 attempts. Last error: $error"
-              )
+    def retryLoadStations(
+        retriesLeft: Int
+    ): IO[Either[String, List[Station]]] = {
+      println(s"Attempting to load bus stations. Retries left: $retriesLeft")
+      SLApi.loadStations().flatMap {
+        case Right(stations) =>
+          IO.pure(Right(stations))
+        case _ if retriesLeft > 0 =>
+          IO.sleep(1.second) >> retryLoadStations(retriesLeft - 1)
+        case Left(error) =>
+          IO.pure(
+            Left(
+              s"Failed to load stations after 3 attempts. Last error: $error"
             )
-        }
+          )
       }
-
-      retryLoadStations(3)
-    } else {
-      println("Mode is not Bus")
-      IO.pure(Left("Mode is not Bus"))
     }
+    retryLoadStations(3)
+
 
   def getSLDepartures(
       stationId: String,

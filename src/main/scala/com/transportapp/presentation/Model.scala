@@ -35,7 +35,7 @@ object Model:
 
     def updateDepartures(newDepartures: List[Departure]): Model = {
       val allDepartures =
-        (model.Departures.getOrElse(List.empty) ++ newDepartures)
+        newDepartures
           .groupBy(d => (d.line, d.destination, d.waitingTime, d.scheduledTime))
           .values
           .map(_.head)

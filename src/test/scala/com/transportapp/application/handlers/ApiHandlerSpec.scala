@@ -53,7 +53,7 @@ object ApiHandlerSpec extends TestSuite {
           runIO(createMockFacadeAndHandler().handle(ApiCommand.LoadStations))
         eventFuture.map { event =>
           assert(
-            event == SLEvent.StationsLoaded(
+            event == ApiEvent.StationsLoaded(
               Right(List(Station("1", "Central Station")))
             )
           )
@@ -70,7 +70,7 @@ object ApiHandlerSpec extends TestSuite {
         )
         eventFuture.map { event =>
           assert(
-            event == SLEvent.DeparturesLoaded(
+            event == ApiEvent.DeparturesLoaded(
               List(
                 Departure(
                   "1",
@@ -96,7 +96,7 @@ object ApiHandlerSpec extends TestSuite {
           )
         )
         eventFuture.map { event =>
-          assert(event == SLEvent.DeparturesLoaded(List.empty))
+          assert(event == ApiEvent.DeparturesLoaded(List.empty))
         }
       }
 
