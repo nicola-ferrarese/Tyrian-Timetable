@@ -21,7 +21,7 @@ jobs:
 
       # Install sbt
       - name: Setup sbt
-        uses: scala-steward-org/setup-sbt-action@v2
+        uses: scala-steward-org/scala-steward-action@v2
         with:
           version: '1.9.9'
 
