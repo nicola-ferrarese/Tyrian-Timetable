@@ -22,7 +22,7 @@ object TransportApp extends TyrianIOApp[Msg, Model]:
   private val apiCommandHandler = ApiHandler(transportFacade)
 
   def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    val initialStation = Station("1183", "Professorsslingan")
+    val initialStation = Station("9001", "t-centralen")
     val model          = Model.initial.updateStation(initialStation)
     val initialStationCmd = Cmd.Run(IO {
       val urlParams = new dom.URLSearchParams(dom.window.location.search)
