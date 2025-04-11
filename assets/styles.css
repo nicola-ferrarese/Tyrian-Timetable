@@ -88,7 +88,7 @@ tbody tr {
 
 
 h2 {
-    color: #ff9300;
+    color: #ffc400;
     font-size: 40px;
     text-align: center;
 
@@ -245,15 +245,30 @@ footer{
 }
 
 @media (max-width: 1000px) {
+    th, td {
+        height: 6vh;
+        font-size: 40px;
+    }
+    th:last-child {
+        padding-right: 2vw;
+    }
+    button{
+        padding: 20px 21px;
+        font-size: 40px;
+    }
+    h2 {
+        font-size: 52px
+    }
     .github-button svg {
         width: 40px;
         height: 40px;
     }
     .github-footer {
-        height: 60px;
+        height: 110px;
     }
     .footer-button {
-        padding: 7px 7px;
+        font-size: 38px;
+        padding: 12px;
     }
 }
 
