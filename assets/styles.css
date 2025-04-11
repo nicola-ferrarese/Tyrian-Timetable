@@ -249,10 +249,7 @@ footer{
         height: 6vh;
         font-size: 40px;
     }
-    svg {
-        height: auto;
-        width: auto;
-    }
+
     th:last-child {
         padding-right: 2vw;
     }
@@ -264,8 +261,8 @@ footer{
         font-size: 52px
     }
     .github-button svg {
-        width: 40px;
-        height: 40px;
+        height: auto;
+        width: auto;
     }
     .github-footer {
         height: 110px;
