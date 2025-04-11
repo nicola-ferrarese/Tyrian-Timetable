@@ -19,6 +19,12 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
 
+      # Install sbt
+      - name: Setup sbt
+        uses: scala-steward-org/setup-sbt-action@v2
+        with:
+          version: '1.9.9'
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
