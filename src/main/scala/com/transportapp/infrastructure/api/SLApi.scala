@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 class SLApi extends TransportApi:
   private val backend = FetchBackend()
-  val stopsUrl        = "https://huspi.mooo.com/api/sl-stops"
+  val stopsUrl        = "https://sl-api.c152.duckdns.org/sl-stops"
   private val baseUrl = "https://transport.integration.sl.se/v1"
   private val dateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
